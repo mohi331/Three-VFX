@@ -1,0 +1,25 @@
+{
+  "name": "r3f-vfx",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "echo ok"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mustache-dev/r3f-vfx"
+  },
+  "keywords": [
+    "3d",
+    "three",
+    "three.js",
+    "react",
+    "r3f",
+    "react-three-fiber",
+    "webgpu",
+    "webgl",
+    "canvas",
+    "vfx",
+    "particles"
+  ]
+}

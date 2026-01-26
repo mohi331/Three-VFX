@@ -1,0 +1,11 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "example",
+    "r3f-vfx"
+  ],
+  "scripts": {
+    "dev": "bun run -F '*' dev"
+  }
+}
