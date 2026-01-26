@@ -6,6 +6,10 @@
     "r3f-vfx"
   ],
   "scripts": {
-    "dev": "bun run -F '*' dev"
+    "dev": "bun run -F '*' dev",
+    "format": "prettier . --write"
+  },
+  "devDependencies": {
+    "prettier": "3.8.1"
   }
 }
