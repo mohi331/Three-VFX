@@ -20,7 +20,7 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "typecheck": "tsc",
-    "copy-readme": "cp ../README.md README.md",
+    "copy-readme": "cp ../../README.md README.md",
     "prepublishOnly": "bun run typecheck && bun run build && bun run copy-readme"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
 node_modules/
 dist/
 .DS_Store
-r3f-vfx/README.md
+packages/*/README.md
