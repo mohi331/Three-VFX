@@ -1,4 +1,7 @@
 {
   "name": "tres-vfx",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "dependencies": {
+    "core-vfx": "0.0.0"
+  }
 }
