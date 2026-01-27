@@ -19,7 +19,8 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepublishOnly": "cp README.md ../README.md"
   },
   "dependencies": {
     "zustand": "5.0.10"
