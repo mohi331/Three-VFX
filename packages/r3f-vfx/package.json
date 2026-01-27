@@ -24,6 +24,7 @@
     "prepublishOnly": "bun run typecheck && bun run build && bun run copy-readme"
   },
   "dependencies": {
+    "core-vfx": "0.0.0",
     "zustand": "5.0.10"
   },
   "devDependencies": {
