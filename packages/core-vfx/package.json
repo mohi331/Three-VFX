@@ -27,7 +27,12 @@
     "zustand": "5.0.10"
   },
   "devDependencies": {
+    "@types/three": "0.182.0",
+    "three": "0.182.0",
     "tsup": "8.5.1",
     "typescript": "5.9.3"
+  },
+  "peerDependencies": {
+    "three": ">=0.182.0"
   }
 }

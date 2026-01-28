@@ -42,361 +42,37 @@ import {
   cameraFar,
   clamp,
 } from 'three/tsl';
-// Appearance enum for particle shapes
-export const Appearance = Object.freeze({
-  DEFAULT: 'default',
-  GRADIENT: 'gradient',
-  CIRCULAR: 'circular',
-});
+import {
+  Appearance,
+  Blending,
+  EmitterShape,
+  AttractorType,
+  Easing,
+  Lighting,
+  MAX_ATTRACTORS,
+  hexToRgb,
+  toRange,
+  easingToType,
+  axisToNumber,
+  toRotation3D,
+  lifetimeToFadeRate,
+  createCombinedCurveTexture,
+  type CurveData,
+  type Rotation3DInput,
+  type ParticleData,
+} from 'core-vfx';
 
-// Blending modes
-export const Blending = Object.freeze({
-  NORMAL: THREE.NormalBlending,
-  ADDITIVE: THREE.AdditiveBlending,
-  MULTIPLY: THREE.MultiplyBlending,
-  SUBTRACTIVE: THREE.SubtractiveBlending,
-});
-
-// Emitter shape types
-export const EmitterShape = Object.freeze({
-  POINT: 0, // Single point emission
-  BOX: 1, // Box/cube volume (uses startPosition ranges)
-  SPHERE: 2, // Sphere surface or volume
-  CONE: 3, // Cone shape (great for fire, fountains)
-  DISK: 4, // Flat disk/circle
-  EDGE: 5, // Line between two points
-});
-
-// Attractor types
-export const AttractorType = Object.freeze({
-  POINT: 0, // Pull toward a point (or push if negative strength)
-  VORTEX: 1, // Swirl around an axis
-});
-
-// Easing types for curves (friction, etc.)
-export const Easing = Object.freeze({
-  LINEAR: 0,
-  EASE_IN: 1,
-  EASE_OUT: 2,
-  EASE_IN_OUT: 3,
-});
-
-// Lighting/material types for geometry-based particles
-export const Lighting = Object.freeze({
-  BASIC: 'basic', // No lighting, flat colors (MeshBasicNodeMaterial)
-  STANDARD: 'standard', // Standard PBR (MeshStandardNodeMaterial)
-  PHYSICAL: 'physical', // Advanced PBR with clearcoat, transmission, etc. (MeshPhysicalNodeMaterial)
-});
-
-// Max number of attractors supported
-const MAX_ATTRACTORS = 4;
-
-// Convert hex to RGB array [0-1]
-const hexToRgb = (hex: string): [number, number, number] => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [
-        parseInt(result[1], 16) / 255,
-        parseInt(result[2], 16) / 255,
-        parseInt(result[3], 16) / 255,
-      ]
-    : [1, 1, 1];
-};
-
-// Normalize a prop to [min, max] array - if single value, use same for both
-const toRange = (
-  value: number | [number, number] | null | undefined,
-  defaultVal: [number, number] = [0, 0]
-): [number, number] => {
-  if (value === undefined || value === null) return defaultVal;
-  if (Array.isArray(value))
-    return value.length === 2 ? value : [value[0], value[0]];
-  return [value, value];
-};
-
-// Convert easing string to type number
-const easingToType = (easing: string | number): number => {
-  if (typeof easing === 'number') return easing;
-  switch (easing) {
-    case 'easeIn':
-      return 1;
-    case 'easeOut':
-      return 2;
-    case 'easeInOut':
-      return 3;
-    default:
-      return 0; // linear
-  }
-};
-
-// Convert axis string to number: 0=+X, 1=+Y, 2=+Z, 3=-X, 4=-Y, 5=-Z
-const axisToNumber = (axis: string): number => {
-  switch (axis) {
-    case 'x':
-    case '+x':
-    case 'X':
-    case '+X':
-      return 0;
-    case 'y':
-    case '+y':
-    case 'Y':
-    case '+Y':
-      return 1;
-    case 'z':
-    case '+z':
-    case 'Z':
-    case '+Z':
-      return 2;
-    case '-x':
-    case '-X':
-      return 3;
-    case '-y':
-    case '-Y':
-      return 4;
-    case '-z':
-    case '-Z':
-      return 5;
-    default:
-      return 2; // default to +Z
-  }
-};
-
-// Curve baking utilities - bake spline curves to 1D textures for GPU sampling
-const CURVE_RESOLUTION = 256; // Number of samples in the baked curve
-
-// Types for curve data
-type CurvePoint = {
-  pos: [number, number];
-  handleIn?: [number, number];
-  handleOut?: [number, number];
-};
-
-type CurveData = {
-  points: CurvePoint[];
-} | null;
-
-// Evaluate cubic bezier between two points with handles
-const evaluateBezierSegment = (
-  t: number,
-  p0: [number, number],
-  p1: [number, number],
-  h0Out?: [number, number],
-  h1In?: [number, number]
-): [number, number] => {
-  // p0 = start point [x, y], p1 = end point [x, y]
-  // h0Out = handle out from p0 (offset), h1In = handle in to p1 (offset)
-  const cp0 = p0;
-  const cp1: [number, number] = [p0[0] + (h0Out?.[0] || 0), p0[1] + (h0Out?.[1] || 0)];
-  const cp2: [number, number] = [p1[0] + (h1In?.[0] || 0), p1[1] + (h1In?.[1] || 0)];
-  const cp3 = p1;
-
-  const mt = 1 - t;
-  const mt2 = mt * mt;
-  const mt3 = mt2 * mt;
-  const t2 = t * t;
-  const t3 = t2 * t;
-
-  return [
-    mt3 * cp0[0] + 3 * mt2 * t * cp1[0] + 3 * mt * t2 * cp2[0] + t3 * cp3[0],
-    mt3 * cp0[1] + 3 * mt2 * t * cp1[1] + 3 * mt * t2 * cp2[1] + t3 * cp3[1],
-  ];
-};
-
-// Find Y value for a given X on the curve using binary search
-const sampleCurveAtX = (x: number, points: CurvePoint[]): number => {
-  if (!points || points.length < 2) return x; // Linear fallback
-
-  // Validate points have required data
-  if (!points[0]?.pos || !points[points.length - 1]?.pos) return x;
-
-  // Find the segment containing x
-  let segmentIdx = 0;
-  for (let i = 0; i < points.length - 1; i++) {
-    if (
-      points[i]?.pos &&
-      points[i + 1]?.pos &&
-      x >= points[i].pos[0] &&
-      x <= points[i + 1].pos[0]
-    ) {
-      segmentIdx = i;
-      break;
-    }
-  }
-
-  const p0 = points[segmentIdx];
-  const p1 = points[segmentIdx + 1];
-
-  // Validate segment points
-  if (!p0?.pos || !p1?.pos) return x;
-
-  // Binary search for t that gives us x
-  let tLow = 0,
-    tHigh = 1,
-    t = 0.5;
-  for (let iter = 0; iter < 20; iter++) {
-    const [px] = evaluateBezierSegment(
-      t,
-      p0.pos,
-      p1.pos,
-      p0.handleOut,
-      p1.handleIn
-    );
-    if (Math.abs(px - x) < 0.0001) break;
-    if (px < x) {
-      tLow = t;
-    } else {
-      tHigh = t;
-    }
-    t = (tLow + tHigh) / 2;
-  }
-
-  const [, py] = evaluateBezierSegment(
-    t,
-    p0.pos,
-    p1.pos,
-    p0.handleOut,
-    p1.handleIn
-  );
-  // Allow values outside 0-1 for overshoot effects (elastic, bounce)
-  // Clamp to reasonable range to prevent extreme values
-  return Math.max(-0.5, Math.min(1.5, py));
-};
-
-// Bake a curve to a Float32Array for use in DataTexture
-export const bakeCurveToArray = (curveData: CurveData, resolution = CURVE_RESOLUTION): Float32Array => {
-  const data = new Float32Array(resolution);
-
-  // Validate curve data structure
-  if (
-    !curveData?.points ||
-    !Array.isArray(curveData.points) ||
-    curveData.points.length < 2
-  ) {
-    // Default linear curve: 1→0 (fade out over lifetime, matching default behavior)
-    for (let i = 0; i < resolution; i++) {
-      data[i] = 1 - i / (resolution - 1);
-    }
-    return data;
-  }
-
-  // Validate first and last points have pos arrays
-  const firstPoint = curveData.points[0];
-  const lastPoint = curveData.points[curveData.points.length - 1];
-  if (
-    !firstPoint?.pos ||
-    !lastPoint?.pos ||
-    !Array.isArray(firstPoint.pos) ||
-    !Array.isArray(lastPoint.pos)
-  ) {
-    // Fallback to linear: 1→0 (fade out)
-    for (let i = 0; i < resolution; i++) {
-      data[i] = 1 - i / (resolution - 1);
-    }
-    return data;
-  }
-
-  for (let i = 0; i < resolution; i++) {
-    const x = i / (resolution - 1); // 0 to 1
-    data[i] = sampleCurveAtX(x, curveData.points);
-  }
-
-  return data;
-};
-
-// Create a combined DataTexture from multiple curve data
-// R = size curve, G = opacity curve, B = velocity curve, A = rotation speed curve
-export const createCombinedCurveTexture = (
-  sizeCurve: CurveData,
-  opacityCurve: CurveData,
-  velocityCurve: CurveData,
-  rotationSpeedCurve: CurveData
-): THREE.DataTexture => {
-  const sizeData = bakeCurveToArray(sizeCurve);
-  const opacityData = bakeCurveToArray(opacityCurve);
-  const velocityData = bakeCurveToArray(velocityCurve);
-  const rotationSpeedData = bakeCurveToArray(rotationSpeedCurve);
-
-  const rgba = new Float32Array(CURVE_RESOLUTION * 4);
-  for (let i = 0; i < CURVE_RESOLUTION; i++) {
-    rgba[i * 4] = sizeData[i]; // R - size easing
-    rgba[i * 4 + 1] = opacityData[i]; // G - opacity easing
-    rgba[i * 4 + 2] = velocityData[i]; // B - velocity easing
-    rgba[i * 4 + 3] = rotationSpeedData[i]; // A - rotation speed easing
-  }
-
-  const tex = new THREE.DataTexture(
-    rgba,
-    CURVE_RESOLUTION,
-    1,
-    THREE.RGBAFormat,
-    THREE.FloatType
-  );
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.needsUpdate = true;
-  return tex;
-};
-
-// Default linear curve: starts at 1, ends at 0 (fade out behavior)
-// Curve Y-value is the DIRECT multiplier: y=1 means full, y=0 means none
-const DEFAULT_LINEAR_CURVE = {
-  points: [
-    { pos: [0, 1], handleOut: [0.33, 0] },
-    { pos: [1, 0], handleIn: [-0.33, 0] },
-  ],
-};
-
-// Normalize rotation prop - supports:
-// - Single number: rotation={0.5} → same rotation for all
-// - [min, max]: rotation={[0, Math.PI]} → random in range (Y-axis for sprites, all axes for geometry)
-// - [[minX, maxX], [minY, maxY], [minZ, maxZ]]: full 3D control
-type Rotation3DInput =
-  | number
-  | [number, number]
-  | [[number, number], [number, number], [number, number]]
-  | null
-  | undefined;
-
-const toRotation3D = (
-  value: Rotation3DInput
-): [[number, number], [number, number], [number, number]] => {
-  if (value === undefined || value === null)
-    return [
-      [0, 0],
-      [0, 0],
-      [0, 0],
-    ];
-  if (typeof value === 'number')
-    return [
-      [value, value],
-      [value, value],
-      [value, value],
-    ];
-  if (Array.isArray(value)) {
-    // Check if nested array [[x], [y], [z]]
-    if (Array.isArray(value[0])) {
-      const nested = value as [[number, number], [number, number], [number, number]];
-      return [
-        toRange(nested[0], [0, 0]),
-        toRange(nested[1], [0, 0]),
-        toRange(nested[2], [0, 0]),
-      ];
-    }
-    // Simple [min, max] - apply to all axes
-    const range = toRange(value as [number, number], [0, 0]);
-    return [range, range, range];
-  }
-  return [
-    [0, 0],
-    [0, 0],
-    [0, 0],
-  ];
-};
-
-// Particle data passed to custom node functions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ParticleData = Record<string, any>;
+// Re-export constants and utilities for backwards compatibility
+export {
+  Appearance,
+  Blending,
+  EmitterShape,
+  AttractorType,
+  Easing,
+  Lighting,
+  bakeCurveToArray,
+  createCombinedCurveTexture,
+} from 'core-vfx';
 
 export type VFXParticlesProps = {
   /** Optional name for registering with useVFXStore (enables VFXEmitter linking) */
@@ -663,9 +339,6 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(function VFXP
     velocityCurve,
     rotationSpeedCurve,
   ]);
-
-  // Convert lifetime in seconds to fade rate per second (framerate independent)
-  const lifetimeToFadeRate = (seconds: number) => 1 / seconds;
 
   // Normalize props to [min, max] ranges
   const sizeRange = useMemo(() => toRange(size, [0.1, 0.3]), [size]);

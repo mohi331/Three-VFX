@@ -32,18 +32,23 @@
     },
     "packages/core-vfx": {
       "name": "core-vfx",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "zustand": "5.0.10",
       },
       "devDependencies": {
+        "@types/three": "0.182.0",
+        "three": "0.182.0",
         "tsup": "8.5.1",
         "typescript": "5.9.3",
+      },
+      "peerDependencies": {
+        "three": ">=0.182.0",
       },
     },
     "packages/r3f-vfx": {
       "name": "r3f-vfx",
-      "version": "0.0.4",
+      "version": "0.0.6",
       "dependencies": {
         "core-vfx": "0.0.1",
         "zustand": "5.0.10",
@@ -65,7 +70,7 @@
     },
     "packages/threlte-vfx": {
       "name": "threlte-vfx",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "core-vfx": "0.0.0",
       },
@@ -76,7 +81,7 @@
     },
     "packages/tres-vfx": {
       "name": "tres-vfx",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "core-vfx": "0.0.0",
       },
@@ -87,7 +92,7 @@
     },
     "packages/vanilla-vfx": {
       "name": "vanilla-vfx",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "core-vfx": "0.0.0",
         "zustand": "5.0.10",
