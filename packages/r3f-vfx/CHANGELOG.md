@@ -1,5 +1,11 @@
 # r3f-vfx
 
+## 0.0.8
+
+### Patch Changes
+
+- a8d3224: Fix missing types
+
 ## 0.0.7
 
 ### Patch Changes
