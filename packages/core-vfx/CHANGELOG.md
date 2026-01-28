@@ -1,5 +1,11 @@
 # core-vfx
 
+## 0.0.3
+
+### Patch Changes
+
+- 9e350df: Move more logic that was in r3f-vfx into core-vfx
+
 ## 0.0.2
 
 ### Patch Changes
