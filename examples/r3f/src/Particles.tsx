@@ -640,6 +640,7 @@ export const Particles = () => {
 /> */}
       {/* Curve Baking Demo - Shows fadeSizeCurve and velocityCurve features */}
       <VFXParticles
+        debug
         curveTexturePath={'/vfx-curve.bin'}
         speed={[2.34, 2.34]}
         appearance="gradient"

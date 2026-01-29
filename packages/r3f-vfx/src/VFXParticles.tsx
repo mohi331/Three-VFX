@@ -1689,29 +1689,24 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
             prevGeometryTypeRef.current = geoType
             prevGeometryArgsRef.current = geoArgs
 
-            import('./VFXParticlesDebugPanel').then(
-              ({ createGeometry, GeometryType }) => {
-                if (geoType === GeometryType.NONE || !geoType) {
-                  // Dispose old geometry if switching to sprite mode
-                  if (activeGeometry !== null && !geometry) {
+            import('debug-vfx').then(({ createGeometry, GeometryType }) => {
+              if (geoType === GeometryType.NONE || !geoType) {
+                // Dispose old geometry if switching to sprite mode
+                if (activeGeometry !== null && !geometry) {
+                  activeGeometry.dispose()
+                }
+                setActiveGeometry(null)
+              } else {
+                const newGeometry = createGeometry(geoType, geoArgs)
+                if (newGeometry) {
+                  // Dispose old geometry if it was created by debug panel (not from props)
+                  if (activeGeometry !== null && activeGeometry !== geometry) {
                     activeGeometry.dispose()
                   }
-                  setActiveGeometry(null)
-                } else {
-                  const newGeometry = createGeometry(geoType, geoArgs)
-                  if (newGeometry) {
-                    // Dispose old geometry if it was created by debug panel (not from props)
-                    if (
-                      activeGeometry !== null &&
-                      activeGeometry !== geometry
-                    ) {
-                      activeGeometry.dispose()
-                    }
-                    setActiveGeometry(newGeometry)
-                  }
+                  setActiveGeometry(newGeometry)
                 }
               }
-            )
+            })
           }
         }
       },
@@ -1928,12 +1923,12 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
       prevGeometryArgsRef.current = initialValues.geometryArgs
 
       // Render debug panel
-      import('./VFXParticlesDebugPanel').then(({ renderDebugPanel }) => {
+      import('debug-vfx').then(({ renderDebugPanel }) => {
         renderDebugPanel(initialValues, handleDebugUpdate)
       })
 
       return () => {
-        import('./VFXParticlesDebugPanel').then(({ destroyDebugPanel }) => {
+        import('debug-vfx').then(({ destroyDebugPanel }) => {
           destroyDebugPanel()
         })
       }
@@ -1943,7 +1938,7 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     // Update debug panel callback when handleDebugUpdate changes (e.g., after state changes)
     useEffect(() => {
       if (!debug) return
-      import('./VFXParticlesDebugPanel').then(({ updateDebugPanel }) => {
+      import('debug-vfx').then(({ updateDebugPanel }) => {
         if (debugValuesRef.current) {
           // Pass a NEW object copy to trigger the reference check in debug panel
           updateDebugPanel({ ...debugValuesRef.current }, handleDebugUpdate)

@@ -6,4 +6,11 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   splitting: false,
+  noExternal: ['react', 'react-dom', 'zustand'],
+  esbuildOptions(options) {
+    options.loader = {
+      ...options.loader,
+      '.js': 'jsx',
+    }
+  },
 })

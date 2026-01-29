@@ -389,7 +389,6 @@ store.clear('sparks')
 
 ```tsx
 import { BoxGeometry } from 'three/webgpu'
-
 ;<VFXParticles
   geometry={new BoxGeometry(1, 1, 1)}
   maxParticles={500}

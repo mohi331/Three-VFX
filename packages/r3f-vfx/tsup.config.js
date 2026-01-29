@@ -6,10 +6,4 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   splitting: false,
-  esbuildOptions(options) {
-    options.loader = {
-      ...options.loader,
-      '.js': 'jsx',
-    }
-  },
 })

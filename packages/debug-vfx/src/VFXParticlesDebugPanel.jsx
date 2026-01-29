@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Appearance, Blending, EmitterShape, Lighting } from './VFXParticles'
+import { Appearance, Blending, EmitterShape, Lighting } from 'core-vfx'
 import { buildCurveTextureBin } from 'core-vfx'
 import * as THREE from 'three'
 import { create } from 'zustand'
@@ -1001,6 +1001,7 @@ const Section = ({
   onToggleEnabled,
   hidden = false,
 }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isHovered, setIsHovered] = useState(false)
   const contentRef = useRef(null)
@@ -1099,6 +1100,7 @@ const Section = ({
 
 // Scrubber hook for drag-to-change values like Photoshop
 const useScrubber = (value, onChange, step = 0.01, min, max) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const isDraggingRef = useRef(false)
   const hasMoved = useRef(false)
   const startX = useRef(0)
@@ -1179,6 +1181,7 @@ const ScrubInput = ({
   style,
   placeholder,
 }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const inputRef = useRef(null)
   const [localValue, setLocalValue] = useState(String(value))
   const [isFocused, setIsFocused] = useState(false)
@@ -1298,6 +1301,7 @@ const ScrubInput = ({
 
 // Input components - all call onChange immediately
 const NumberInput = ({ label, value, onChange, min, max, step = 0.01 }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const { handleMouseDown } = useScrubber(value, onChange, step, min, max)
 
   return (
@@ -1329,6 +1333,7 @@ const RangeInput = ({
   max = 100,
   step = 0.01,
 }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const [minVal, maxVal] = parseRange(value, [0, 0])
   const [linked, setLinked] = useState(false)
 
@@ -1446,6 +1451,7 @@ const RangeInput = ({
 }
 
 const Vec3Input = ({ label, value, onChange }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const [x, y, z] = value || [0, 0, 0]
   const { handleMouseDown } = useScrubber(x, (v) => onChange([v, y, z]), 0.1)
 
@@ -1492,6 +1498,7 @@ const Vec3Input = ({ label, value, onChange }) => {
 }
 
 const Range3DInput = ({ label, value, onChange }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const parsed = parse3D(value)
   const update = (axis, idx, val) => {
     const newVal = parsed.map((r, i) =>
@@ -1546,39 +1553,46 @@ const Range3DInput = ({ label, value, onChange }) => {
   )
 }
 
-const SelectInput = ({ label, value, onChange, options }) => (
-  <div style={styles.row}>
-    <label style={styles.label}>{label}</label>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={styles.select}
-    >
-      {Object.entries(options).map(([key, val]) => (
-        <option key={key} value={val}>
-          {key}
-        </option>
-      ))}
-    </select>
-  </div>
-)
+const SelectInput = ({ label, value, onChange, options }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
+  return (
+    <div style={styles.row}>
+      <label style={styles.label}>{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={styles.select}
+      >
+        {Object.entries(options).map(([key, val]) => (
+          <option key={key} value={val}>
+            {key}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
-const CheckboxInput = ({ label, value, onChange }) => (
-  <div style={styles.row}>
-    <label style={styles.checkboxLabel}>
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-        style={styles.checkbox}
-      />
-      {label}
-    </label>
-  </div>
-)
+const CheckboxInput = ({ label, value, onChange }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
+  return (
+    <div style={styles.row}>
+      <label style={styles.checkboxLabel}>
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+          style={styles.checkbox}
+        />
+        {label}
+      </label>
+    </div>
+  )
+}
 
 // Custom Color Picker matching the UI theme
 const CustomColorPicker = ({ color, onChange }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const [isOpen, setIsOpen] = useState(false)
   const [hexInput, setHexInput] = useState(color)
   const pickerRef = useRef(null)
@@ -1975,6 +1989,7 @@ const CustomColorPicker = ({ color, onChange }) => {
 }
 
 const ColorArrayInput = ({ label, value, onChange }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const colors = value || ['#ffffff']
   const updateColor = (index, color) => {
     const newColors = [...colors]
@@ -2023,6 +2038,7 @@ const ColorArrayInput = ({ label, value, onChange }) => {
 
 // Easing Curve Editor Component - bezier curve with handles
 const EasingCurveEditor = ({ value, onChange, label = 'Easing Curve' }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   // value = { points: [{ pos: [x, y], handleIn: [dx, dy], handleOut: [dx, dy] }, ...] }
   // Start point (0, 0) has handleOut only, end point (1, 1) has handleIn only
   // Default curve: 1→0 (fade out behavior - start full, end at zero)
@@ -3579,6 +3595,7 @@ const LoadingSpinner = () => (
 )
 
 const DebugPanelContent = ({ initialValues, onUpdate }) => {
+  'use no memo' // prevent react compiler issues when there are multiple versions of react
   const [isMinimized, setIsMinimized] = useState(false)
   const [panelSize, setPanelSize] = useState({ width: 380, height: null }) // null = full height
   const [copySuccess, setCopySuccess] = useState(false)
