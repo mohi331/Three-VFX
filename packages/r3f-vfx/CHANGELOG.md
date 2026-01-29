@@ -1,5 +1,13 @@
 # r3f-vfx
 
+## 0.1.5
+
+### Patch Changes
+
+- 407b855: Move debug panel into its own package
+- Updated dependencies [407b855]
+  - debug-vfx@0.0.1
+
 ## 0.1.4
 
 ### Patch Changes
