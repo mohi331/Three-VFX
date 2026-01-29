@@ -1,5 +1,13 @@
 # r3f-vfx
 
+## 0.1.6
+
+### Patch Changes
+
+- e302258: Fix internal dependencies
+- Updated dependencies [e302258]
+  - debug-vfx@0.0.7
+
 ## 0.1.5
 
 ### Patch Changes

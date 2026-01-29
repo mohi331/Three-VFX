@@ -1,5 +1,11 @@
 # debug-vfx
 
+## 0.0.7
+
+### Patch Changes
+
+- e302258: Fix internal dependencies
+
 ## 0.0.1
 
 ### Patch Changes
