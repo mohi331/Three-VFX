@@ -1,6 +1,6 @@
 {
   "name": "vanilla-vfx",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -24,7 +24,7 @@
     "prepublishOnly": "bun run typecheck && bun run build && bun run copy-readme"
   },
   "dependencies": {
-    "core-vfx": "0.0.8",
+    "core-vfx": "0.0.9",
     "zustand": "5.0.10"
   },
   "devDependencies": {

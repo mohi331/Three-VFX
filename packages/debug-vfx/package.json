@@ -1,6 +1,6 @@
 {
   "name": "debug-vfx",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -22,7 +22,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "core-vfx": "0.0.8"
+    "core-vfx": "0.0.9"
   },
   "devDependencies": {
     "@types/react": "19.2.10",

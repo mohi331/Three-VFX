@@ -1,5 +1,11 @@
 # core-vfx
 
+## 0.0.9
+
+### Patch Changes
+
+- ba3bb7f: bug fix
+
 ## 0.0.8
 
 ### Patch Changes

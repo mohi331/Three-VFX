@@ -1,5 +1,13 @@
 # tres-vfx
 
+## 0.0.9
+
+### Patch Changes
+
+- ba3bb7f: bug fix
+- Updated dependencies [ba3bb7f]
+  - core-vfx@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes
