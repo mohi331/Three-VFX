@@ -288,6 +288,220 @@ export function updateUniforms(
   u.sizeBasedGravity.value = props.collision?.sizeBasedGravity ?? 0
 }
 
+export function updateUniformsPartial(
+  uniforms: ParticleUniforms,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rawProps: Record<string, any>
+): void {
+  const u = uniforms as unknown as UniformAccessor
+
+  if ('size' in rawProps) {
+    const sizeR = toRange(rawProps.size, [0.1, 0.3])
+    u.sizeMin.value = sizeR[0]
+    u.sizeMax.value = sizeR[1]
+  }
+  if ('fadeSize' in rawProps) {
+    const fadeSizeR = toRange(rawProps.fadeSize, [1, 0])
+    u.fadeSizeStart.value = fadeSizeR[0]
+    u.fadeSizeEnd.value = fadeSizeR[1]
+  }
+  if ('fadeOpacity' in rawProps) {
+    const fadeOpacityR = toRange(rawProps.fadeOpacity, [1, 0])
+    u.fadeOpacityStart.value = fadeOpacityR[0]
+    u.fadeOpacityEnd.value = fadeOpacityR[1]
+  }
+  if ('fadeSizeCurve' in rawProps) {
+    u.fadeSizeCurveEnabled.value = rawProps.fadeSizeCurve ? 1 : 0
+  }
+  if ('fadeOpacityCurve' in rawProps) {
+    u.fadeOpacityCurveEnabled.value = rawProps.fadeOpacityCurve ? 1 : 0
+  }
+  if ('velocityCurve' in rawProps) {
+    u.velocityCurveEnabled.value = rawProps.velocityCurve ? 1 : 0
+  }
+  if ('rotationSpeedCurve' in rawProps) {
+    u.rotationSpeedCurveEnabled.value = rawProps.rotationSpeedCurve ? 1 : 0
+  }
+  if ('orientAxis' in rawProps) {
+    u.orientAxisType.value = axisToNumber(rawProps.orientAxis)
+  }
+  if ('stretchBySpeed' in rawProps) {
+    u.stretchEnabled.value = rawProps.stretchBySpeed ? 1 : 0
+    u.stretchFactor.value = rawProps.stretchBySpeed?.factor ?? 1
+    u.stretchMax.value = rawProps.stretchBySpeed?.maxStretch ?? 5
+  }
+  if ('gravity' in rawProps && rawProps.gravity && Array.isArray(rawProps.gravity)) {
+    u.gravity.value.set(...(rawProps.gravity as [number, number, number]))
+  }
+  if ('speed' in rawProps) {
+    const speedR = toRange(rawProps.speed, [0.1, 0.1])
+    u.speedMin.value = speedR[0]
+    u.speedMax.value = speedR[1]
+  }
+  if ('lifetime' in rawProps) {
+    const lifetimeR = toRange(rawProps.lifetime, [1, 2])
+    u.lifetimeMin.value = 1 / lifetimeR[1]
+    u.lifetimeMax.value = 1 / lifetimeR[0]
+  }
+  if ('friction' in rawProps && rawProps.friction) {
+    const frictionR = toRange(rawProps.friction.intensity, [0, 0])
+    u.frictionIntensityStart.value = frictionR[0]
+    u.frictionIntensityEnd.value = frictionR[1]
+    u.frictionEasingType.value = easingToType(rawProps.friction.easing)
+  }
+  if ('direction' in rawProps) {
+    const dir3D = toRotation3D(rawProps.direction)
+    u.dirMinX.value = dir3D[0][0]
+    u.dirMaxX.value = dir3D[0][1]
+    u.dirMinY.value = dir3D[1][0]
+    u.dirMaxY.value = dir3D[1][1]
+    u.dirMinZ.value = dir3D[2][0]
+    u.dirMaxZ.value = dir3D[2][1]
+  }
+  if ('startPosition' in rawProps) {
+    const startPos3D = toRotation3D(rawProps.startPosition)
+    u.startPosMinX.value = startPos3D[0][0]
+    u.startPosMaxX.value = startPos3D[0][1]
+    u.startPosMinY.value = startPos3D[1][0]
+    u.startPosMaxY.value = startPos3D[1][1]
+    u.startPosMinZ.value = startPos3D[2][0]
+    u.startPosMaxZ.value = startPos3D[2][1]
+  }
+  if ('rotation' in rawProps) {
+    const rot3D = toRotation3D(rawProps.rotation)
+    u.rotationMinX.value = rot3D[0][0]
+    u.rotationMaxX.value = rot3D[0][1]
+    u.rotationMinY.value = rot3D[1][0]
+    u.rotationMaxY.value = rot3D[1][1]
+    u.rotationMinZ.value = rot3D[2][0]
+    u.rotationMaxZ.value = rot3D[2][1]
+  }
+  if ('rotationSpeed' in rawProps) {
+    const rotSpeed3D = toRotation3D(rawProps.rotationSpeed)
+    u.rotationSpeedMinX.value = rotSpeed3D[0][0]
+    u.rotationSpeedMaxX.value = rotSpeed3D[0][1]
+    u.rotationSpeedMinY.value = rotSpeed3D[1][0]
+    u.rotationSpeedMaxY.value = rotSpeed3D[1][1]
+    u.rotationSpeedMinZ.value = rotSpeed3D[2][0]
+    u.rotationSpeedMaxZ.value = rotSpeed3D[2][1]
+  }
+  if ('intensity' in rawProps) {
+    u.intensity.value = rawProps.intensity ?? 1
+  }
+  if ('colorStart' in rawProps && rawProps.colorStart) {
+    const sColors = rawProps.colorStart.slice(0, 8).map(hexToRgb)
+    while (sColors.length < 8)
+      sColors.push(sColors[sColors.length - 1] || [1, 1, 1])
+    u.colorStartCount.value = rawProps.colorStart.length
+    sColors.forEach((c: [number, number, number], i: number) => {
+      if (u[`colorStart${i}`]) u[`colorStart${i}`].value.setRGB(...c)
+    })
+  }
+  if ('colorEnd' in rawProps) {
+    const effectiveEndColors =
+      rawProps.colorEnd || rawProps.colorStart || ['#ffffff']
+    const eColors = effectiveEndColors.slice(0, 8).map(hexToRgb)
+    while (eColors.length < 8)
+      eColors.push(eColors[eColors.length - 1] || [1, 1, 1])
+    u.colorEndCount.value = effectiveEndColors.length
+    eColors.forEach((c: [number, number, number], i: number) => {
+      if (u[`colorEnd${i}`]) u[`colorEnd${i}`].value.setRGB(...c)
+    })
+  }
+  if ('emitterShape' in rawProps) {
+    u.emitterShapeType.value = rawProps.emitterShape ?? 0
+  }
+  if ('emitterRadius' in rawProps) {
+    const emitterRadiusR = toRange(rawProps.emitterRadius, [0, 1])
+    u.emitterRadiusInner.value = emitterRadiusR[0]
+    u.emitterRadiusOuter.value = emitterRadiusR[1]
+  }
+  if ('emitterAngle' in rawProps) {
+    u.emitterAngle.value = rawProps.emitterAngle ?? Math.PI / 4
+  }
+  if ('emitterHeight' in rawProps) {
+    const emitterHeightR = toRange(rawProps.emitterHeight, [0, 1])
+    u.emitterHeightMin.value = emitterHeightR[0]
+    u.emitterHeightMax.value = emitterHeightR[1]
+  }
+  if ('emitterSurfaceOnly' in rawProps) {
+    u.emitterSurfaceOnly.value = rawProps.emitterSurfaceOnly ? 1 : 0
+  }
+  if (
+    'emitterDirection' in rawProps &&
+    rawProps.emitterDirection &&
+    Array.isArray(rawProps.emitterDirection)
+  ) {
+    const dir = new THREE.Vector3(
+      ...(rawProps.emitterDirection as [number, number, number])
+    ).normalize()
+    u.emitterDir.value.x = dir.x
+    u.emitterDir.value.y = dir.y
+    u.emitterDir.value.z = dir.z
+  }
+  if ('turbulence' in rawProps) {
+    u.turbulenceIntensity.value = rawProps.turbulence?.intensity ?? 0
+    u.turbulenceFrequency.value = rawProps.turbulence?.frequency ?? 1
+    u.turbulenceSpeed.value = rawProps.turbulence?.speed ?? 1
+  }
+  if ('attractors' in rawProps) {
+    const attractorList = rawProps.attractors ?? []
+    u.attractorCount.value = Math.min(attractorList.length, MAX_ATTRACTORS)
+    for (let i = 0; i < MAX_ATTRACTORS; i++) {
+      const a: AttractorConfig | undefined = attractorList[i]
+      if (a) {
+        ;(u[`attractor${i}Pos`].value as THREE.Vector3).set(
+          ...(a.position ?? [0, 0, 0])
+        )
+        u[`attractor${i}Strength`].value = a.strength ?? 1
+        u[`attractor${i}Radius`].value = a.radius ?? 0
+        u[`attractor${i}Type`].value = a.type === 'vortex' ? 1 : 0
+        ;(u[`attractor${i}Axis`].value as THREE.Vector3)
+          .set(...(a.axis ?? [0, 1, 0]))
+          .normalize()
+      } else {
+        u[`attractor${i}Strength`].value = 0
+      }
+    }
+  }
+  if ('attractToCenter' in rawProps) {
+    u.attractToCenter.value = rawProps.attractToCenter ? 1 : 0
+  }
+  if ('startPositionAsDirection' in rawProps) {
+    u.startPositionAsDirection.value = rawProps.startPositionAsDirection ? 1 : 0
+  }
+  if ('softParticles' in rawProps) {
+    u.softParticlesEnabled.value = rawProps.softParticles ? 1 : 0
+  }
+  if ('softDistance' in rawProps) {
+    u.softDistance.value = rawProps.softDistance ?? 0.5
+  }
+  if ('collision' in rawProps) {
+    u.collisionEnabled.value = rawProps.collision ? 1 : 0
+    u.collisionPlaneY.value = rawProps.collision?.plane?.y ?? 0
+    u.collisionBounce.value = rawProps.collision?.bounce ?? 0.3
+    u.collisionFriction.value = rawProps.collision?.friction ?? 0.8
+    u.collisionDie.value = rawProps.collision?.die ? 1 : 0
+    u.sizeBasedGravity.value = rawProps.collision?.sizeBasedGravity ?? 0
+  }
+}
+
+export function updateUniformsCurveFlags(
+  uniforms: ParticleUniforms,
+  flags: {
+    fadeSizeCurveEnabled: boolean
+    fadeOpacityCurveEnabled: boolean
+    velocityCurveEnabled: boolean
+    rotationSpeedCurveEnabled: boolean
+  }
+): void {
+  const u = uniforms as unknown as UniformAccessor
+  u.fadeSizeCurveEnabled.value = flags.fadeSizeCurveEnabled ? 1 : 0
+  u.fadeOpacityCurveEnabled.value = flags.fadeOpacityCurveEnabled ? 1 : 0
+  u.velocityCurveEnabled.value = flags.velocityCurveEnabled ? 1 : 0
+  u.rotationSpeedCurveEnabled.value = flags.rotationSpeedCurveEnabled ? 1 : 0
+}
+
 export function applySpawnOverrides(
   uniforms: ParticleUniforms,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

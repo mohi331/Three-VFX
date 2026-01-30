@@ -135,18 +135,26 @@ export type NormalizedParticleProps = {
 
 // Options for VFXParticleSystem constructor
 export type VFXParticleSystemOptions = BaseParticleProps & {
+  /** TSL node or function for backdrop sampling */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   backdropNode?: any
+  /** TSL node or function for custom opacity */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   opacityNode?: any
+  /** TSL node or function to override color */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   colorNode?: any
+  /** TSL node or function for alpha test/discard */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   alphaTestNode?: any
+  /** TSL node or function for shadow map output */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   castShadowNode?: any
+  /** Depth test */
   depthTest?: boolean
+  /** Render order (higher values render on top) */
   renderOrder?: number
+  /** Path to pre-baked curve texture (skips runtime baking for faster load) */
   curveTexturePath?: string | null
 }
 

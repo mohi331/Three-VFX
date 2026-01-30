@@ -75,7 +75,13 @@ export type {
 } from './shaders'
 
 // Uniforms
-export { createUniforms, updateUniforms, applySpawnOverrides } from './uniforms'
+export {
+  createUniforms,
+  updateUniforms,
+  updateUniformsPartial,
+  updateUniformsCurveFlags,
+  applySpawnOverrides,
+} from './uniforms'
 
 // Storage
 export {
