@@ -330,7 +330,11 @@ export function updateUniformsPartial(
     u.stretchFactor.value = rawProps.stretchBySpeed?.factor ?? 1
     u.stretchMax.value = rawProps.stretchBySpeed?.maxStretch ?? 5
   }
-  if ('gravity' in rawProps && rawProps.gravity && Array.isArray(rawProps.gravity)) {
+  if (
+    'gravity' in rawProps &&
+    rawProps.gravity &&
+    Array.isArray(rawProps.gravity)
+  ) {
     u.gravity.value.set(...(rawProps.gravity as [number, number, number]))
   }
   if ('speed' in rawProps) {
@@ -398,8 +402,8 @@ export function updateUniformsPartial(
     })
   }
   if ('colorEnd' in rawProps) {
-    const effectiveEndColors =
-      rawProps.colorEnd || rawProps.colorStart || ['#ffffff']
+    const effectiveEndColors = rawProps.colorEnd ||
+      rawProps.colorStart || ['#ffffff']
     const eColors = effectiveEndColors.slice(0, 8).map(hexToRgb)
     while (eColors.length < 8)
       eColors.push(eColors[eColors.length - 1] || [1, 1, 1])

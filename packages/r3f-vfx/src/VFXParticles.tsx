@@ -541,8 +541,7 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
             ...newValues,
             colorEnd: null,
             // Ensure updateUniformsPartial gets the right fallback
-            colorStart:
-              newValues.colorStart ??
+            colorStart: newValues.colorStart ??
               debugValuesRef.current?.colorStart ?? ['#ffffff'],
           }
         }

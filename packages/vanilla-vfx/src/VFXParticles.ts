@@ -62,8 +62,10 @@ export class VFXParticles {
 
     if (this._debug) {
       const { renderDebugPanel } = await import('debug-vfx')
-      renderDebugPanel({ ...this._config }, (newValues: Record<string, unknown>) =>
-        this.setProps(newValues)
+      renderDebugPanel(
+        { ...this._config },
+        (newValues: Record<string, unknown>) => this.setProps(newValues),
+        'vanilla'
       )
     }
   }
@@ -142,7 +144,10 @@ export class VFXParticles {
     this._config = { ...this._config, ...newValues }
 
     // Check if structural keys or feature flags changed (requires GPU pipeline rebuild)
-    if (this._system && needsRecreation(this._system.features, newValues, this._config)) {
+    if (
+      this._system &&
+      needsRecreation(this._system.features, newValues, this._config)
+    ) {
       this._recreateSystem()
       return
     }
@@ -154,7 +159,10 @@ export class VFXParticles {
         if (geoType === GeometryType.NONE || !geoType) {
           this._config.geometry = null
         } else {
-          this._config.geometry = createGeometry(geoType, this._config.geometryArgs)
+          this._config.geometry = createGeometry(
+            geoType,
+            this._config.geometryArgs
+          )
         }
         this._recreateSystem()
       })
@@ -185,14 +193,19 @@ export class VFXParticles {
     if (!this._system) return
 
     // Handle colorStart→colorEnd fallback before calling core
-    if ('colorStart' in newValues && newValues.colorStart && !this._config.colorEnd) {
+    if (
+      'colorStart' in newValues &&
+      newValues.colorStart &&
+      !this._config.colorEnd
+    ) {
       // When colorEnd is null, colorEnd should mirror colorStart
       newValues = { ...newValues, colorEnd: null }
     }
     if ('colorEnd' in newValues && !newValues.colorEnd) {
       newValues = {
         ...newValues,
-        colorStart: newValues.colorStart ?? this._config.colorStart ?? ['#ffffff'],
+        colorStart: newValues.colorStart ??
+          this._config.colorStart ?? ['#ffffff'],
       }
     }
 

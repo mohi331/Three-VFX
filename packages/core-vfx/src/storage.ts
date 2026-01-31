@@ -81,7 +81,10 @@ export function needsRecreation(
   if (newFeatures.attractors !== currentFeatures.attractors) return true
   if (newFeatures.collision !== currentFeatures.collision) return true
   if (newFeatures.needsRotation !== currentFeatures.needsRotation) return true
-  if (newFeatures.needsPerParticleColor !== currentFeatures.needsPerParticleColor) return true
+  if (
+    newFeatures.needsPerParticleColor !== currentFeatures.needsPerParticleColor
+  )
+    return true
 
   return false
 }
