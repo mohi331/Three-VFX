@@ -101,6 +101,7 @@ export const Boom = () => {
   })
   return (
     <VFXParticles
+      debug
       autoStart={false}
       name="boom"
       curveTexturePath={'./boom-2.bin'}

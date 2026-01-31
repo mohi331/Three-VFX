@@ -22,6 +22,7 @@ import {
   updateUniforms,
   updateUniformsPartial,
   updateUniformsCurveFlags,
+  resolveFeatures,
   type VFXParticleSystemOptions,
 } from 'core-vfx'
 
@@ -122,11 +123,6 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     const spriteRef = useRef<THREE.Sprite | THREE.InstancedMesh | null>(null)
     const [emitting, setEmitting] = useState(autoStart)
 
-    // Refs for runtime values that can be updated by debug panel
-    const delayRef = useRef(delay)
-    const emitCountRef = useRef(emitCount)
-    const turbulenceRef = useRef(turbulence)
-
     // State for "remount-required" values - changing these recreates GPU resources
     const [activeMaxParticles, setActiveMaxParticles] = useState(maxParticles)
     const [activeLighting, setActiveLighting] = useState(lighting)
@@ -155,13 +151,6 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     const [activeNeedsRotation, setActiveNeedsRotation] = useState(
       isNonDefaultRotation(rotation) || isNonDefaultRotation(rotationSpeed)
     )
-
-    // Keep refs in sync with props (when not in debug mode)
-    useEffect(() => {
-      delayRef.current = delay
-      emitCountRef.current = emitCount
-      turbulenceRef.current = turbulence
-    }, [delay, emitCount, turbulence])
 
     // Keep remount-required state in sync with props (when not in debug mode)
     useEffect(() => {
@@ -325,15 +314,14 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
       system.init()
     }, [system])
 
-    // Store position prop for use in spawn
-    const positionRef = useRef(position)
-
     // Update uniforms when non-structural props change (skip in debug mode)
     useEffect(() => {
       if (debug) return
 
-      positionRef.current = position
       system.setPosition(position)
+      system.setDelay(delay)
+      system.setEmitCount(emitCount)
+      system.setTurbulenceSpeed(turbulence?.speed ?? 1)
 
       const normalized = normalizeProps({
         size,
@@ -410,29 +398,11 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
       curveTextureOpacityEnabled,
       orientAxis,
       stretchBySpeed,
+      delay,
+      emitCount,
     ])
 
-    // Keep computeUpdate in a ref so useFrame always has the latest version
-    const computeUpdateRef = useRef(system.computeUpdate)
-    useEffect(() => {
-      computeUpdateRef.current = system.computeUpdate
-    }, [system.computeUpdate])
-
-    // Spawn function - internal
-    const spawnInternal = useCallback(
-      (
-        x: number,
-        y: number,
-        z: number,
-        count = 20,
-        overrides: Record<string, unknown> | null = null
-      ) => {
-        system.spawn(x, y, z, count, overrides)
-      },
-      [system]
-    )
-
-    // Public spawn - uses position prop as offset, supports overrides
+    // Public spawn - uses system position as offset, supports overrides
     const spawn = useCallback(
       (
         x = 0,
@@ -441,58 +411,33 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
         count = 20,
         overrides: Record<string, unknown> | null = null
       ) => {
-        const [px, py, pz] = positionRef.current ?? [0, 0, 0]
-        spawnInternal(px + x, py + y, pz + z, count, overrides)
+        const [px, py, pz] = system.position
+        system.spawn(px + x, py + y, pz + z, count, overrides)
       },
-      [spawnInternal]
+      [system]
     )
 
     // Update each frame + auto emit
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const emitAccumulator = useRef(0)
-    useFrame(async (state, delta) => {
-      if (!system.initialized || !renderer) return
+    useFrame(async (_state, delta) => {
+      if (!system.initialized) return
 
-      // Update deltaTime uniform for framerate independence
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const uFrame = system.uniforms as Record<string, any>
-      uFrame.deltaTime.value = delta
+      await system.update(delta)
 
-      // Update turbulence time (animated noise field)
-      const turbSpeed = turbulenceRef.current?.speed ?? 1
-      uFrame.turbulenceTime.value += delta * turbSpeed
-
-      // Update particles - use ref to always get latest computeUpdate
-      // @ts-expect-error - WebGPU computeAsync not in WebGL types
-      await renderer.computeAsync(computeUpdateRef.current)
-
-      // Auto emit if enabled
       if (emitting) {
-        const [px, py, pz] = positionRef.current
-        const currentDelay = delayRef.current
-        const currentEmitCount = emitCountRef.current
-
-        if (!currentDelay) {
-          spawnInternal(px, py, pz, currentEmitCount)
-        } else {
-          emitAccumulator.current += delta
-          if (emitAccumulator.current >= currentDelay) {
-            emitAccumulator.current -= currentDelay
-            spawnInternal(px, py, pz, currentEmitCount)
-          }
-        }
+        system.autoEmit(delta)
       }
     })
 
     // Start/stop functions
     const start = useCallback(() => {
+      system.start()
       setEmitting(true)
-      emitAccumulator.current = 0
-    }, [])
+    }, [system])
 
     const stop = useCallback(() => {
+      system.stop()
       setEmitting(false)
-    }, [])
+    }, [system])
 
     // Cleanup old material/renderObject when they change (not on unmount)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -619,74 +564,38 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
           setActiveRotationSpeedCurve(newValues.rotationSpeedCurve)
         }
 
-        // React state: rotation feature flag
-        if ('rotation' in newValues || 'rotationSpeed' in newValues) {
-          const rot = newValues.rotation ??
-            debugValuesRef.current?.rotation ?? [0, 0]
-          const rotSpeed = newValues.rotationSpeed ??
-            debugValuesRef.current?.rotationSpeed ?? [0, 0]
-          const needsRotation =
-            isNonDefaultRotation(rot) || isNonDefaultRotation(rotSpeed)
-          if (needsRotation !== activeNeedsRotation) {
-            setActiveNeedsRotation(needsRotation)
-          }
-        }
-
-        // React state: per-particle color feature flag
-        if ('colorStart' in newValues || 'colorEnd' in newValues) {
-          const startLen =
-            newValues.colorStart?.length ??
-            debugValuesRef.current?.colorStart?.length ??
-            1
-          const hasColorEnd =
-            'colorEnd' in newValues
-              ? newValues.colorEnd !== null
-              : debugValuesRef.current?.colorEnd !== null
-          const needsPerParticle = startLen > 1 || hasColorEnd
-          if (needsPerParticle !== activeNeedsPerParticleColor) {
-            setActiveNeedsPerParticleColor(needsPerParticle)
-          }
-        }
-
-        // React state: turbulence feature flag + ref
+        // Update turbulence speed on system
         if ('turbulence' in newValues) {
-          turbulenceRef.current = newValues.turbulence
-          const needsTurbulence =
-            newValues.turbulence !== null &&
-            (newValues.turbulence?.intensity ?? 0) > 0
-          if (needsTurbulence !== activeTurbulence) {
-            setActiveTurbulence(needsTurbulence)
-          }
+          system.setTurbulenceSpeed(newValues.turbulence?.speed ?? 1)
         }
 
-        // React state: attractors feature flag
-        if ('attractors' in newValues) {
-          const needsAttractors =
-            newValues.attractors !== null && newValues.attractors?.length > 0
-          if (needsAttractors !== activeAttractors) {
-            setActiveAttractors(needsAttractors)
-          }
+        // React state: feature flags that trigger recreation
+        const newFeatures = resolveFeatures(debugValuesRef.current)
+        if (newFeatures.needsRotation !== activeNeedsRotation) {
+          setActiveNeedsRotation(newFeatures.needsRotation)
+        }
+        if (newFeatures.needsPerParticleColor !== activeNeedsPerParticleColor) {
+          setActiveNeedsPerParticleColor(newFeatures.needsPerParticleColor)
+        }
+        if (newFeatures.turbulence !== activeTurbulence) {
+          setActiveTurbulence(newFeatures.turbulence)
+        }
+        if (newFeatures.attractors !== activeAttractors) {
+          setActiveAttractors(newFeatures.attractors)
+        }
+        if (newFeatures.collision !== activeCollision) {
+          setActiveCollision(newFeatures.collision)
         }
 
-        // React state: collision feature flag
-        if ('collision' in newValues) {
-          const needsCollision =
-            newValues.collision !== null && newValues.collision !== undefined
-          if (needsCollision !== activeCollision) {
-            setActiveCollision(needsCollision)
-          }
-        }
-
-        // Position ref update
+        // Position update
         if (newValues.position) {
-          positionRef.current = newValues.position
           system.setPosition(newValues.position)
         }
 
-        // Runtime refs update
-        if ('delay' in newValues) delayRef.current = newValues.delay ?? 0
+        // Runtime updates
+        if ('delay' in newValues) system.setDelay(newValues.delay ?? 0)
         if ('emitCount' in newValues)
-          emitCountRef.current = newValues.emitCount ?? 1
+          system.setEmitCount(newValues.emitCount ?? 1)
 
         // Update emitting state
         if (newValues.autoStart !== undefined) {
@@ -789,195 +698,62 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     useEffect(() => {
       if (!debug) return
 
-      // Helper to detect geometry type from THREE.js geometry object
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      function detectGeometryTypeAndArgs(geo: any) {
-        if (!geo) return { geometryType: 'none', geometryArgs: null }
+      import('debug-vfx').then(
+        ({ renderDebugPanel, detectGeometryTypeAndArgs }) => {
+          const initialValues = {
+            name,
+            maxParticles,
+            size,
+            colorStart,
+            colorEnd,
+            fadeSize,
+            fadeSizeCurve: fadeSizeCurve || null,
+            fadeOpacity,
+            fadeOpacityCurve: fadeOpacityCurve || null,
+            velocityCurve: velocityCurve || null,
+            gravity,
+            lifetime,
+            direction,
+            startPosition,
+            startPositionAsDirection,
+            speed,
+            friction,
+            appearance,
+            rotation,
+            rotationSpeed,
+            rotationSpeedCurve: rotationSpeedCurve || null,
+            orientToDirection,
+            orientAxis,
+            stretchBySpeed: stretchBySpeed || null,
+            lighting,
+            shadow,
+            blending,
+            intensity,
+            position,
+            autoStart,
+            delay,
+            emitCount,
+            emitterShape,
+            emitterRadius,
+            emitterAngle,
+            emitterHeight,
+            emitterSurfaceOnly,
+            emitterDirection,
+            turbulence,
+            attractToCenter,
+            softParticles,
+            softDistance,
+            collision,
+            ...detectGeometryTypeAndArgs(geometry),
+          }
 
-        const name = geo.constructor.name
-        const params = geo.parameters || {}
+          debugValuesRef.current = initialValues
+          prevGeometryTypeRef.current = initialValues.geometryType
+          prevGeometryArgsRef.current = initialValues.geometryArgs
 
-        switch (name) {
-          case 'BoxGeometry':
-            return {
-              geometryType: 'box',
-              geometryArgs: {
-                width: params.width ?? 1,
-                height: params.height ?? 1,
-                depth: params.depth ?? 1,
-                widthSegments: params.widthSegments ?? 1,
-                heightSegments: params.heightSegments ?? 1,
-                depthSegments: params.depthSegments ?? 1,
-              },
-            }
-          case 'SphereGeometry':
-            return {
-              geometryType: 'sphere',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                widthSegments: params.widthSegments ?? 16,
-                heightSegments: params.heightSegments ?? 12,
-              },
-            }
-          case 'CylinderGeometry':
-            return {
-              geometryType: 'cylinder',
-              geometryArgs: {
-                radiusTop: params.radiusTop ?? 0.5,
-                radiusBottom: params.radiusBottom ?? 0.5,
-                height: params.height ?? 1,
-                radialSegments: params.radialSegments ?? 16,
-                heightSegments: params.heightSegments ?? 1,
-              },
-            }
-          case 'ConeGeometry':
-            return {
-              geometryType: 'cone',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                height: params.height ?? 1,
-                radialSegments: params.radialSegments ?? 16,
-                heightSegments: params.heightSegments ?? 1,
-              },
-            }
-          case 'TorusGeometry':
-            return {
-              geometryType: 'torus',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                tube: params.tube ?? 0.2,
-                radialSegments: params.radialSegments ?? 12,
-                tubularSegments: params.tubularSegments ?? 24,
-              },
-            }
-          case 'PlaneGeometry':
-            return {
-              geometryType: 'plane',
-              geometryArgs: {
-                width: params.width ?? 1,
-                height: params.height ?? 1,
-                widthSegments: params.widthSegments ?? 1,
-                heightSegments: params.heightSegments ?? 1,
-              },
-            }
-          case 'CircleGeometry':
-            return {
-              geometryType: 'circle',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                segments: params.segments ?? 16,
-              },
-            }
-          case 'RingGeometry':
-            return {
-              geometryType: 'ring',
-              geometryArgs: {
-                innerRadius: params.innerRadius ?? 0.25,
-                outerRadius: params.outerRadius ?? 0.5,
-                thetaSegments: params.thetaSegments ?? 16,
-              },
-            }
-          case 'DodecahedronGeometry':
-            return {
-              geometryType: 'dodecahedron',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                detail: params.detail ?? 0,
-              },
-            }
-          case 'IcosahedronGeometry':
-            return {
-              geometryType: 'icosahedron',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                detail: params.detail ?? 0,
-              },
-            }
-          case 'OctahedronGeometry':
-            return {
-              geometryType: 'octahedron',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                detail: params.detail ?? 0,
-              },
-            }
-          case 'TetrahedronGeometry':
-            return {
-              geometryType: 'tetrahedron',
-              geometryArgs: {
-                radius: params.radius ?? 0.5,
-                detail: params.detail ?? 0,
-              },
-            }
-          case 'CapsuleGeometry':
-            return {
-              geometryType: 'capsule',
-              geometryArgs: {
-                radius: params.radius ?? 0.25,
-                length: params.length ?? 0.5,
-                capSegments: params.capSegments ?? 4,
-                radialSegments: params.radialSegments ?? 8,
-              },
-            }
-          default:
-            return { geometryType: 'none', geometryArgs: null }
+          renderDebugPanel(initialValues, handleDebugUpdate)
         }
-      }
-
-      const initialValues = {
-        name,
-        maxParticles,
-        size,
-        colorStart,
-        colorEnd,
-        fadeSize,
-        fadeSizeCurve: fadeSizeCurve || null,
-        fadeOpacity,
-        fadeOpacityCurve: fadeOpacityCurve || null,
-        velocityCurve: velocityCurve || null,
-        gravity,
-        lifetime,
-        direction,
-        startPosition,
-        startPositionAsDirection,
-        speed,
-        friction,
-        appearance,
-        rotation,
-        rotationSpeed,
-        rotationSpeedCurve: rotationSpeedCurve || null,
-        orientToDirection,
-        orientAxis,
-        stretchBySpeed: stretchBySpeed || null,
-        lighting,
-        shadow,
-        blending,
-        intensity,
-        position,
-        autoStart,
-        delay,
-        emitCount,
-        emitterShape,
-        emitterRadius,
-        emitterAngle,
-        emitterHeight,
-        emitterSurfaceOnly,
-        emitterDirection,
-        turbulence,
-        attractToCenter,
-        softParticles,
-        softDistance,
-        collision,
-        ...detectGeometryTypeAndArgs(geometry),
-      }
-
-      debugValuesRef.current = initialValues
-      prevGeometryTypeRef.current = initialValues.geometryType
-      prevGeometryArgsRef.current = initialValues.geometryArgs
-
-      import('debug-vfx').then(({ renderDebugPanel }) => {
-        renderDebugPanel(initialValues, handleDebugUpdate)
-      })
+      )
 
       return () => {
         import('debug-vfx').then(({ destroyDebugPanel }) => {

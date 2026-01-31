@@ -4,6 +4,15 @@ import type { ParticleStorageArrays, ShaderFeatures } from './shaders/types'
 import type { Rotation3DInput } from './types'
 import { isNonDefaultRotation } from './utils'
 
+// Keys whose change requires full system recreation (GPU pipeline rebuild)
+export const STRUCTURAL_KEYS = [
+  'maxParticles',
+  'lighting',
+  'appearance',
+  'shadow',
+  'orientToDirection',
+] as const
+
 export function resolveFeatures(props: {
   colorStart?: string[]
   colorEnd?: string[] | null
@@ -49,6 +58,32 @@ export function resolveFeatures(props: {
     rotation: needsRotation,
     perParticleColor: needsPerParticleColor,
   }
+}
+
+// Check if changed props require full system recreation.
+// `changedProps` is the partial update (only changed keys).
+// `mergedConfig` is the full config after merging changedProps.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function needsRecreation(
+  currentFeatures: ShaderFeatures,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  changedProps: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mergedConfig: Record<string, any>
+): boolean {
+  // Check structural keys
+  if (STRUCTURAL_KEYS.some((key) => key in changedProps)) return true
+
+  // Check feature flag changes
+  const newFeatures = resolveFeatures(mergedConfig)
+
+  if (newFeatures.turbulence !== currentFeatures.turbulence) return true
+  if (newFeatures.attractors !== currentFeatures.attractors) return true
+  if (newFeatures.collision !== currentFeatures.collision) return true
+  if (newFeatures.needsRotation !== currentFeatures.needsRotation) return true
+  if (newFeatures.needsPerParticleColor !== currentFeatures.needsPerParticleColor) return true
+
+  return false
 }
 
 export function createStorageArrays(

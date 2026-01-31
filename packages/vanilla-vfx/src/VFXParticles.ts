@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu'
 import {
   VFXParticleSystem,
-  isNonDefaultRotation,
+  needsRecreation,
   updateUniformsPartial,
 } from 'core-vfx'
 import type { VFXParticleSystemOptions } from 'core-vfx'
@@ -9,15 +9,6 @@ import type { VFXParticleSystemOptions } from 'core-vfx'
 export type VFXParticlesOptions = VFXParticleSystemOptions & {
   debug?: boolean
 }
-
-// Structural keys that require full system recreation
-const STRUCTURAL_KEYS = [
-  'maxParticles',
-  'lighting',
-  'appearance',
-  'shadow',
-  'orientToDirection',
-]
 
 export class VFXParticles {
   readonly group: THREE.Group
@@ -150,60 +141,10 @@ export class VFXParticles {
   setProps(newValues: Record<string, any>): void {
     this._config = { ...this._config, ...newValues }
 
-    // Check if any structural key changed
-    const needsRecreate = STRUCTURAL_KEYS.some((key) => key in newValues)
-
-    // Feature flags that also require recreation
-    if ('turbulence' in newValues) {
-      const newHasTurbulence =
-        newValues.turbulence !== null &&
-        (newValues.turbulence?.intensity ?? 0) > 0
-      const oldHasTurbulence = this._system?.features.turbulence ?? false
-      if (newHasTurbulence !== oldHasTurbulence) {
-        this._recreateSystem()
-        return
-      }
-    }
-    if ('attractors' in newValues) {
-      const newHasAttractors =
-        newValues.attractors !== null && newValues.attractors?.length > 0
-      const oldHasAttractors = this._system?.features.attractors ?? false
-      if (newHasAttractors !== oldHasAttractors) {
-        this._recreateSystem()
-        return
-      }
-    }
-    if ('collision' in newValues) {
-      const newHasCollision =
-        newValues.collision !== null && newValues.collision !== undefined
-      const oldHasCollision = this._system?.features.collision ?? false
-      if (newHasCollision !== oldHasCollision) {
-        this._recreateSystem()
-        return
-      }
-    }
-    if ('rotation' in newValues || 'rotationSpeed' in newValues) {
-      const rot = this._config.rotation ?? [0, 0]
-      const rotSpeed = this._config.rotationSpeed ?? [0, 0]
-      const newNeedsRotation =
-        isNonDefaultRotation(rot) || isNonDefaultRotation(rotSpeed)
-      const oldNeedsRotation = this._system?.features.needsRotation ?? false
-      if (newNeedsRotation !== oldNeedsRotation) {
-        this._recreateSystem()
-        return
-      }
-    }
-    if ('colorStart' in newValues || 'colorEnd' in newValues) {
-      const startLen = this._config.colorStart?.length ?? 1
-      const hasColorEnd =
-        this._config.colorEnd !== null && this._config.colorEnd !== undefined
-      const newNeedsPerParticleColor = startLen > 1 || hasColorEnd
-      const oldNeedsPerParticleColor =
-        this._system?.features.needsPerParticleColor ?? false
-      if (newNeedsPerParticleColor !== oldNeedsPerParticleColor) {
-        this._recreateSystem()
-        return
-      }
+    // Check if structural keys or feature flags changed (requires GPU pipeline rebuild)
+    if (this._system && needsRecreation(this._system.features, newValues, this._config)) {
+      this._recreateSystem()
+      return
     }
 
     // Handle geometry type changes from debug panel
@@ -217,11 +158,6 @@ export class VFXParticles {
         }
         this._recreateSystem()
       })
-      return
-    }
-
-    if (needsRecreate) {
-      this._recreateSystem()
       return
     }
 

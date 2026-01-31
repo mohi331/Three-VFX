@@ -237,6 +237,140 @@ export const createGeometry = (type, args = {}) => {
   }
 }
 
+// Detect geometry type and args from a Three.js geometry object
+export function detectGeometryTypeAndArgs(geo) {
+  if (!geo) return { geometryType: 'none', geometryArgs: null }
+
+  const name = geo.constructor.name
+  const params = geo.parameters || {}
+
+  switch (name) {
+    case 'BoxGeometry':
+      return {
+        geometryType: 'box',
+        geometryArgs: {
+          width: params.width ?? 1,
+          height: params.height ?? 1,
+          depth: params.depth ?? 1,
+          widthSegments: params.widthSegments ?? 1,
+          heightSegments: params.heightSegments ?? 1,
+          depthSegments: params.depthSegments ?? 1,
+        },
+      }
+    case 'SphereGeometry':
+      return {
+        geometryType: 'sphere',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          widthSegments: params.widthSegments ?? 16,
+          heightSegments: params.heightSegments ?? 12,
+        },
+      }
+    case 'CylinderGeometry':
+      return {
+        geometryType: 'cylinder',
+        geometryArgs: {
+          radiusTop: params.radiusTop ?? 0.5,
+          radiusBottom: params.radiusBottom ?? 0.5,
+          height: params.height ?? 1,
+          radialSegments: params.radialSegments ?? 16,
+          heightSegments: params.heightSegments ?? 1,
+        },
+      }
+    case 'ConeGeometry':
+      return {
+        geometryType: 'cone',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          height: params.height ?? 1,
+          radialSegments: params.radialSegments ?? 16,
+          heightSegments: params.heightSegments ?? 1,
+        },
+      }
+    case 'TorusGeometry':
+      return {
+        geometryType: 'torus',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          tube: params.tube ?? 0.2,
+          radialSegments: params.radialSegments ?? 12,
+          tubularSegments: params.tubularSegments ?? 24,
+        },
+      }
+    case 'PlaneGeometry':
+      return {
+        geometryType: 'plane',
+        geometryArgs: {
+          width: params.width ?? 1,
+          height: params.height ?? 1,
+          widthSegments: params.widthSegments ?? 1,
+          heightSegments: params.heightSegments ?? 1,
+        },
+      }
+    case 'CircleGeometry':
+      return {
+        geometryType: 'circle',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          segments: params.segments ?? 16,
+        },
+      }
+    case 'RingGeometry':
+      return {
+        geometryType: 'ring',
+        geometryArgs: {
+          innerRadius: params.innerRadius ?? 0.25,
+          outerRadius: params.outerRadius ?? 0.5,
+          thetaSegments: params.thetaSegments ?? 16,
+        },
+      }
+    case 'DodecahedronGeometry':
+      return {
+        geometryType: 'dodecahedron',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          detail: params.detail ?? 0,
+        },
+      }
+    case 'IcosahedronGeometry':
+      return {
+        geometryType: 'icosahedron',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          detail: params.detail ?? 0,
+        },
+      }
+    case 'OctahedronGeometry':
+      return {
+        geometryType: 'octahedron',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          detail: params.detail ?? 0,
+        },
+      }
+    case 'TetrahedronGeometry':
+      return {
+        geometryType: 'tetrahedron',
+        geometryArgs: {
+          radius: params.radius ?? 0.5,
+          detail: params.detail ?? 0,
+        },
+      }
+    case 'CapsuleGeometry':
+      return {
+        geometryType: 'capsule',
+        geometryArgs: {
+          radius: params.radius ?? 0.25,
+          length: params.length ?? 0.5,
+          capSegments: params.capSegments ?? 4,
+          radialSegments: params.radialSegments ?? 8,
+        },
+      }
+    default:
+      return { geometryType: 'none', geometryArgs: null }
+  }
+}
+
 // Global state for the debug panel
 let debugRoot = null
 let debugContainer = null

@@ -88,6 +88,8 @@ export {
   createStorageArrays,
   createRenderObject,
   resolveFeatures,
+  needsRecreation,
+  STRUCTURAL_KEYS,
 } from './storage'
 
 // Particle system class
