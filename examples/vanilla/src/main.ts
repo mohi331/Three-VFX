@@ -266,7 +266,6 @@ async function main() {
   }
 
   const particles = new VFXParticles(renderer, {
-    debug: true,
     autoStart: false,
     curveTexturePath: './boom-2.bin',
     emitCount: 100,
@@ -314,6 +313,14 @@ async function main() {
       )
     })
   let boomTimer = 0
+
+  // =========================================================================
+  // Debug particles (default, next to boom)
+  // =========================================================================
+  const debugParticles = new VFXParticles(renderer, { debug: true })
+  debugParticles.object3D.position.set(5, 0, 0)
+  scene.add(debugParticles.object3D)
+  await debugParticles.init()
 
   // =========================================================================
   // Post-processing
@@ -457,6 +464,7 @@ async function main() {
 
     // -- Particles --
     particles.update(delta)
+    debugParticles.update(delta)
 
     // -- Render --
     postProcessing.render()

@@ -1,10 +1,6 @@
 import { useFrame, useLoader } from '@react-three/fiber'
-import {
-  Blending,
-  useVFXEmitter,
-  VFXParticles,
-} from '../../../packages/r3f-vfx/src'
-import { SRGBColorSpace, TextureLoader, Vector3 } from 'three'
+import { Blending, useVFXEmitter, VFXParticles } from 'r3f-vfx'
+import { SRGBColorSpace, TextureLoader, Vector3 } from 'three/webgpu'
 import { color, mix, smoothstep, texture, uv, vec3, vec4 } from 'three/tsl'
 export const Boom = () => {
   const text = useLoader(TextureLoader, './smoke-ww.png')
@@ -101,7 +97,6 @@ export const Boom = () => {
   })
   return (
     <VFXParticles
-      debug
       autoStart={false}
       name="boom"
       curveTexturePath={'./boom-2.bin'}

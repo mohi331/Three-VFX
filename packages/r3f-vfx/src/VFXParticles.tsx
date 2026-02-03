@@ -121,6 +121,10 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     const spriteRef = useRef<THREE.Sprite | THREE.InstancedMesh | null>(null)
     const [emitting, setEmitting] = useState(autoStart)
 
+    // Debug panel accumulated values (declared early so useMemo can read it)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const debugValuesRef = useRef<any>(null)
+
     // State for "remount-required" values - changing these recreates GPU resources
     const [activeMaxParticles, setActiveMaxParticles] = useState(maxParticles)
     const [activeLighting, setActiveLighting] = useState(lighting)
@@ -198,66 +202,71 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
 
     // Create/recreate system when structural props change
     const system = useMemo(
-      () =>
-        new VFXParticleSystem(
+      () => {
+        // In debug mode, use accumulated debug values so that the constructor
+        // resolves features (per-particle color, rotation, etc.) correctly.
+        const dbg = debug ? debugValuesRef.current : null
+        return new VFXParticleSystem(
           renderer as unknown as THREE.WebGPURenderer,
           {
             maxParticles: activeMaxParticles,
-            size,
-            colorStart,
-            colorEnd,
-            fadeSize,
+            size: dbg?.size ?? size,
+            colorStart: dbg?.colorStart ?? colorStart,
+            colorEnd: dbg?.colorEnd !== undefined ? dbg.colorEnd : colorEnd,
+            fadeSize: dbg?.fadeSize ?? fadeSize,
             fadeSizeCurve: activeFadeSizeCurve,
-            fadeOpacity,
+            fadeOpacity: dbg?.fadeOpacity ?? fadeOpacity,
             fadeOpacityCurve: activeFadeOpacityCurve,
             velocityCurve: activeVelocityCurve,
-            gravity,
-            lifetime,
-            direction,
-            startPosition,
-            speed,
-            friction,
+            gravity: dbg?.gravity ?? gravity,
+            lifetime: dbg?.lifetime ?? lifetime,
+            direction: dbg?.direction ?? direction,
+            startPosition: dbg?.startPosition ?? startPosition,
+            speed: dbg?.speed ?? speed,
+            friction: dbg?.friction ?? friction,
             appearance: activeAppearance,
             alphaMap,
             flipbook,
-            rotation,
-            rotationSpeed,
+            rotation: dbg?.rotation ?? rotation,
+            rotationSpeed: dbg?.rotationSpeed ?? rotationSpeed,
             rotationSpeedCurve: activeRotationSpeedCurve,
             geometry: activeGeometry,
             orientToDirection: activeOrientToDirection,
-            orientAxis,
-            stretchBySpeed,
+            orientAxis: dbg?.orientAxis ?? orientAxis,
+            stretchBySpeed: dbg?.stretchBySpeed ?? stretchBySpeed,
             lighting: activeLighting,
             shadow: activeShadow,
-            blending,
-            intensity,
-            position,
-            autoStart,
-            delay,
-            emitCount,
-            emitterShape,
-            emitterRadius,
-            emitterAngle,
-            emitterHeight,
-            emitterSurfaceOnly,
-            emitterDirection,
-            turbulence,
-            attractors,
-            attractToCenter,
-            startPositionAsDirection,
-            softParticles,
-            softDistance,
-            collision,
+            blending: dbg?.blending ?? blending,
+            intensity: dbg?.intensity ?? intensity,
+            position: dbg?.position ?? position,
+            autoStart: dbg?.autoStart ?? autoStart,
+            delay: dbg?.delay ?? delay,
+            emitCount: dbg?.emitCount ?? emitCount,
+            emitterShape: dbg?.emitterShape ?? emitterShape,
+            emitterRadius: dbg?.emitterRadius ?? emitterRadius,
+            emitterAngle: dbg?.emitterAngle ?? emitterAngle,
+            emitterHeight: dbg?.emitterHeight ?? emitterHeight,
+            emitterSurfaceOnly: dbg?.emitterSurfaceOnly ?? emitterSurfaceOnly,
+            emitterDirection: dbg?.emitterDirection ?? emitterDirection,
+            turbulence: dbg?.turbulence ?? turbulence,
+            attractors: dbg?.attractors ?? attractors,
+            attractToCenter: dbg?.attractToCenter ?? attractToCenter,
+            startPositionAsDirection:
+              dbg?.startPositionAsDirection ?? startPositionAsDirection,
+            softParticles: dbg?.softParticles ?? softParticles,
+            softDistance: dbg?.softDistance ?? softDistance,
+            collision: dbg?.collision ?? collision,
             backdropNode,
             opacityNode,
             colorNode,
             alphaTestNode,
             castShadowNode,
-            depthTest,
-            renderOrder,
+            depthTest: dbg?.depthTest ?? depthTest,
+            renderOrder: dbg?.renderOrder ?? renderOrder,
             curveTexturePath,
           }
-        ),
+        )
+      },
       // Only recreate when structural props change (features, maxParticles, etc.)
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [
@@ -290,7 +299,7 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
       ]
     )
 
-    // Initialize on mount
+    // Initialize on mount (and after recreation)
     useEffect(() => {
       system.init()
     }, [system])
@@ -480,8 +489,6 @@ export const VFXParticles = forwardRef<unknown, VFXParticlesProps>(
     }, [name, particleAPI, registerParticles, unregisterParticles])
 
     // Debug panel - no React state, direct ref mutation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const debugValuesRef = useRef<any>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prevGeometryTypeRef = useRef<any>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

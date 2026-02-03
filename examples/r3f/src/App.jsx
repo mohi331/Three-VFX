@@ -8,6 +8,7 @@ import { WobblySphere } from './WobblySphere'
 import { Floor } from './Floor'
 import Player from './Player'
 import { Boom } from './Boom'
+import { VFXParticles } from 'r3f-vfx'
 // import { Particles } from './Particles'
 
 const keyboardMap = [
@@ -31,6 +32,9 @@ export default function App() {
             <Player />
           </KeyboardControls>
           <Boom />
+          <group position={[5, 0, 0]}>
+            <VFXParticles debug />
+          </group>
           {/* <Particles /> */}
           {/* <WobblySphere/> */}
         </Suspense>

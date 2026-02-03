@@ -152,6 +152,18 @@ export class VFXParticles {
       return
     }
 
+    // Curve changes require recreation (texture is baked into compute/material pipelines)
+    if (
+      'fadeSizeCurve' in newValues ||
+      'fadeOpacityCurve' in newValues ||
+      'velocityCurve' in newValues ||
+      'rotationSpeedCurve' in newValues ||
+      'curveTexturePath' in newValues
+    ) {
+      this._recreateSystem()
+      return
+    }
+
     // Handle geometry type changes from debug panel
     if ('geometryType' in newValues || 'geometryArgs' in newValues) {
       import('debug-vfx').then(({ createGeometry, GeometryType }) => {
@@ -174,9 +186,15 @@ export class VFXParticles {
   }
 
   private async _recreateSystem(): Promise<void> {
-    if (this._system) {
-      this.group.remove(this._system.renderObject)
-      this._system.dispose()
+    const old = this._system
+    // Clear immediately so update() no-ops while the new system initialises
+    this._system = null
+    if (old) {
+      this.group.remove(old.renderObject)
+      // Note: we intentionally skip old.dispose() here. Calling dispose()
+      // destroys GPU buffers that may still be referenced by in-flight
+      // WebGPU command buffers from previous frames, causing a crash.
+      // The old resources become unreferenced and will be GC'd.
     }
     const s = new VFXParticleSystem(
       this._renderer,
