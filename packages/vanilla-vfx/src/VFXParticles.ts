@@ -13,32 +13,32 @@ export type VFXParticlesOptions = VFXParticleSystemOptions & {
   fallback?: THREE.Object3D
 }
 
-let _warnedWebGL = false
+let warnedWebGL = false
 
 export class VFXParticles {
   readonly group: THREE.Group
-  private _renderer: THREE.WebGPURenderer
+  private renderer: THREE.WebGPURenderer
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _config: Record<string, any>
-  private _system: VFXParticleSystem | null = null
-  private _emitting = true
-  private _emitAccumulator = 0
-  private _debug: boolean
-  private _initialized = false
-  private _disabled = false
+  private config: Record<string, any>
+  system: VFXParticleSystem | null = null
+  isEmitting = true
+  private emitAccumulator = 0
+  private debug: boolean
+  private initialized = false
+  private disabled = false
 
   constructor(renderer: THREE.WebGPURenderer, options?: VFXParticlesOptions) {
-    this._renderer = renderer
-    this._debug = options?.debug ?? false
-    this._config = { ...options }
-    delete this._config.debug
-    delete this._config.fallback
+    this.renderer = renderer
+    this.debug = options?.debug ?? false
+    this.config = { ...options }
+    delete this.config.debug
+    delete this.config.fallback
     this.group = new THREE.Group()
 
     if (!isWebGPUBackend(renderer)) {
-      this._disabled = true
-      if (!_warnedWebGL) {
-        _warnedWebGL = true
+      this.disabled = true
+      if (!warnedWebGL) {
+        warnedWebGL = true
         console.warn(
           'r3f-vfx: WebGPU backend not detected. Particle system disabled.'
         )
@@ -53,38 +53,30 @@ export class VFXParticles {
     return this.group
   }
 
-  get system(): VFXParticleSystem | null {
-    return this._system
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get uniforms(): Record<string, { value: any }> | null {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this._system
-      ? (this._system.uniforms as unknown as Record<string, { value: any }>)
+    return this.system
+      ? (this.system.uniforms as unknown as Record<string, { value: any }>)
       : null
   }
 
-  get isEmitting(): boolean {
-    return this._emitting
-  }
-
   async init(): Promise<void> {
-    if (this._disabled) return
-    if (this._initialized) return
+    if (this.disabled) return
+    if (this.initialized) return
 
-    if (this._debug) {
+    if (this.debug) {
       const { DEFAULT_VALUES } = await import('debug-vfx')
-      this._config = { ...DEFAULT_VALUES, ...this._config }
+      this.config = { ...DEFAULT_VALUES, ...this.config }
     }
 
-    await this._recreateSystem()
-    this._initialized = true
+    await this.recreateSystem()
+    this.initialized = true
 
-    if (this._debug) {
+    if (this.debug) {
       const { renderDebugPanel } = await import('debug-vfx')
       renderDebugPanel(
-        { ...this._config },
+        { ...this.config },
         (newValues: Record<string, unknown>) => this.setProps(newValues),
         'vanilla'
       )
@@ -92,41 +84,41 @@ export class VFXParticles {
   }
 
   update(delta: number): void {
-    if (this._disabled) return
-    if (!this._system || !this._system.initialized) return
+    if (this.disabled) return
+    if (!this.system || !this.system.initialized) return
 
     // Auto-emission
-    if (this._emitting) {
-      const delay = this._system.normalizedProps.delay
-      const emitCount = this._system.normalizedProps.emitCount
-      const [px, py, pz] = this._system.position
+    if (this.isEmitting) {
+      const delay = this.system.normalizedProps.delay
+      const emitCount = this.system.normalizedProps.emitCount
+      const [px, py, pz] = this.system.position
 
       if (!delay) {
-        this._system.spawn(px, py, pz, emitCount)
+        this.system.spawn(px, py, pz, emitCount)
       } else {
-        this._emitAccumulator += delta
-        if (this._emitAccumulator >= delay) {
-          this._emitAccumulator -= delay
-          this._system.spawn(px, py, pz, emitCount)
+        this.emitAccumulator += delta
+        if (this.emitAccumulator >= delay) {
+          this.emitAccumulator -= delay
+          this.system.spawn(px, py, pz, emitCount)
         }
       }
     }
 
-    this._system.update(delta)
+    this.system.update(delta)
   }
 
   dispose(): void {
-    if (this._system) {
-      this.group.remove(this._system.renderObject)
-      this._system.dispose()
-      this._system = null
+    if (this.system) {
+      this.group.remove(this.system.renderObject)
+      this.system.dispose()
+      this.system = null
     }
-    if (this._debug) {
+    if (this.debug) {
       import('debug-vfx').then(({ destroyDebugPanel }) => {
         destroyDebugPanel()
       })
     }
-    this._initialized = false
+    this.initialized = false
   }
 
   spawn(
@@ -136,46 +128,46 @@ export class VFXParticles {
     count?: number,
     overrides?: Record<string, unknown> | null
   ): void {
-    if (this._disabled) return
-    if (!this._system) return
-    this._system.spawn(
+    if (this.disabled) return
+    if (!this.system) return
+    this.system.spawn(
       x,
       y,
       z,
-      count ?? this._system.normalizedProps.emitCount,
+      count ?? this.system.normalizedProps.emitCount,
       overrides ?? null
     )
   }
 
   start(): void {
-    if (this._disabled) return
-    this._emitting = true
-    this._emitAccumulator = 0
-    if (this._system) this._system.start()
+    if (this.disabled) return
+    this.isEmitting = true
+    this.emitAccumulator = 0
+    if (this.system) this.system.start()
   }
 
   stop(): void {
-    if (this._disabled) return
-    this._emitting = false
-    if (this._system) this._system.stop()
+    if (this.disabled) return
+    this.isEmitting = false
+    if (this.system) this.system.stop()
   }
 
   clear(): void {
-    if (this._disabled) return
-    if (this._system) this._system.clear()
+    if (this.disabled) return
+    if (this.system) this.system.clear()
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setProps(newValues: Record<string, any>): void {
-    if (this._disabled) return
-    this._config = { ...this._config, ...newValues }
+    if (this.disabled) return
+    this.config = { ...this.config, ...newValues }
 
     // Check if structural keys or feature flags changed (requires GPU pipeline rebuild)
     if (
-      this._system &&
-      needsRecreation(this._system.features, newValues, this._config)
+      this.system &&
+      needsRecreation(this.system.features, newValues, this.config)
     ) {
-      this._recreateSystem()
+      this.recreateSystem()
       return
     }
 
@@ -187,35 +179,35 @@ export class VFXParticles {
       'rotationSpeedCurve' in newValues ||
       'curveTexturePath' in newValues
     ) {
-      this._recreateSystem()
+      this.recreateSystem()
       return
     }
 
     // Handle geometry type changes from debug panel
     if ('geometryType' in newValues || 'geometryArgs' in newValues) {
       import('debug-vfx').then(({ createGeometry, GeometryType }) => {
-        const geoType = this._config.geometryType
+        const geoType = this.config.geometryType
         if (geoType === GeometryType.NONE || !geoType) {
-          this._config.geometry = null
+          this.config.geometry = null
         } else {
-          this._config.geometry = createGeometry(
+          this.config.geometry = createGeometry(
             geoType,
-            this._config.geometryArgs
+            this.config.geometryArgs
           )
         }
-        this._recreateSystem()
+        this.recreateSystem()
       })
       return
     }
 
     // Uniform-level updates (no recreation needed)
-    this._applyUniformUpdates(newValues)
+    this.applyUniformUpdates(newValues)
   }
 
-  private async _recreateSystem(): Promise<void> {
-    const old = this._system
+  private async recreateSystem(): Promise<void> {
+    const old = this.system
     // Clear immediately so update() no-ops while the new system initialises
-    this._system = null
+    this.system = null
     if (old) {
       this.group.remove(old.renderObject)
       // Note: we intentionally skip old.dispose() here. Calling dispose()
@@ -224,24 +216,24 @@ export class VFXParticles {
       // The old resources become unreferenced and will be GC'd.
     }
     const s = new VFXParticleSystem(
-      this._renderer,
-      this._config as VFXParticleSystemOptions
+      this.renderer,
+      this.config as VFXParticleSystemOptions
     )
     await s.init()
-    this._system = s
+    this.system = s
     this.group.add(s.renderObject)
-    this._emitAccumulator = 0
+    this.emitAccumulator = 0
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _applyUniformUpdates(newValues: Record<string, any>): void {
-    if (!this._system) return
+  private applyUniformUpdates(newValues: Record<string, any>): void {
+    if (!this.system) return
 
     // Handle colorStart→colorEnd fallback before calling core
     if (
       'colorStart' in newValues &&
       newValues.colorStart &&
-      !this._config.colorEnd
+      !this.config.colorEnd
     ) {
       // When colorEnd is null, colorEnd should mirror colorStart
       newValues = { ...newValues, colorEnd: null }
@@ -250,30 +242,30 @@ export class VFXParticles {
       newValues = {
         ...newValues,
         colorStart: newValues.colorStart ??
-          this._config.colorStart ?? ['#ffffff'],
+          this.config.colorStart ?? ['#ffffff'],
       }
     }
 
-    updateUniformsPartial(this._system.uniforms, newValues)
+    updateUniformsPartial(this.system.uniforms, newValues)
 
     // Non-uniform updates
     if (newValues.position) {
-      this._system.setPosition(newValues.position)
+      this.system.setPosition(newValues.position)
     }
     if ('delay' in newValues) {
-      this._system.setDelay(newValues.delay ?? 0)
+      this.system.setDelay(newValues.delay ?? 0)
     }
     if ('emitCount' in newValues) {
-      this._system.setEmitCount(newValues.emitCount ?? 1)
+      this.system.setEmitCount(newValues.emitCount ?? 1)
     }
     if (newValues.autoStart !== undefined) {
-      this._emitting = newValues.autoStart
-      if (this._emitting) this._system.start()
-      else this._system.stop()
+      this.isEmitting = newValues.autoStart
+      if (this.isEmitting) this.system.start()
+      else this.system.stop()
     }
-    if (this._system.material && newValues.blending !== undefined) {
-      this._system.material.blending = newValues.blending
-      this._system.material.needsUpdate = true
+    if (this.system.material && newValues.blending !== undefined) {
+      this.system.material.blending = newValues.blending
+      this.system.material.needsUpdate = true
     }
   }
 }

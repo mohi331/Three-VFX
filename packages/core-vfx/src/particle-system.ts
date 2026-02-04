@@ -50,19 +50,19 @@ export class VFXParticleSystem {
   readonly normalizedProps: NormalizedParticleProps
 
   // Internal state
-  private _renderer: THREE.WebGPURenderer
-  private _nextIndex = 0
-  private _initialized = false
-  private _emitting: boolean
-  private _emitAccumulator = 0
-  private _turbulenceSpeed: number
-  private _position: [number, number, number]
+  private renderer: THREE.WebGPURenderer
+  nextIndex = 0
+  initialized = false
+  isEmitting: boolean
+  private emitAccumulator = 0
+  private turbulenceSpeed: number
+  position: [number, number, number]
 
   constructor(
     renderer: THREE.WebGPURenderer,
     options: VFXParticleSystemOptions
   ) {
-    this._renderer = renderer
+    this.renderer = renderer
     this.options = options
 
     // Normalize props
@@ -164,15 +164,15 @@ export class VFXParticleSystem {
     )
 
     // Internal state
-    this._emitting = np.autoStart
-    this._turbulenceSpeed = np.turbulence?.speed ?? 1
-    this._position = [...np.position]
+    this.isEmitting = np.autoStart
+    this.turbulenceSpeed = np.turbulence?.speed ?? 1
+    this.position = [...np.position]
   }
 
   async init(): Promise<void> {
-    if (this._initialized) return
+    if (this.initialized) return
     await (
-      this._renderer as unknown as {
+      this.renderer as unknown as {
         computeAsync: (c: unknown) => Promise<void>
       }
     ).computeAsync(this.computeInit)
@@ -209,7 +209,7 @@ export class VFXParticleSystem {
       }
     }
 
-    this._initialized = true
+    this.initialized = true
   }
 
   dispose(): void {
@@ -221,8 +221,8 @@ export class VFXParticleSystem {
         this.renderObject.geometry.dispose()
       }
     }
-    this._initialized = false
-    this._nextIndex = 0
+    this.initialized = false
+    this.nextIndex = 0
   }
 
   spawn(
@@ -232,13 +232,13 @@ export class VFXParticleSystem {
     count = 20,
     overrides: Record<string, unknown> | null = null
   ): void {
-    if (!this._initialized || !this._renderer) return
+    if (!this.initialized || !this.renderer) return
 
     const restore = applySpawnOverrides(this.uniforms, overrides)
 
     const u = this.uniforms as unknown as UniformAccessor
 
-    const startIdx = this._nextIndex
+    const startIdx = this.nextIndex
     const endIdx = (startIdx + count) % this.normalizedProps.maxParticles
 
     u.spawnPosition.value.set(x, y, z)
@@ -246,9 +246,9 @@ export class VFXParticleSystem {
     u.spawnIndexEnd.value = endIdx
     u.spawnSeed.value = Math.random() * 10000
 
-    this._nextIndex = endIdx
+    this.nextIndex = endIdx
     ;(
-      this._renderer as unknown as {
+      this.renderer as unknown as {
         computeAsync: (c: unknown) => Promise<void>
       }
     ).computeAsync(this.computeSpawn)
@@ -257,54 +257,54 @@ export class VFXParticleSystem {
   }
 
   async update(delta: number): Promise<void> {
-    if (!this._initialized || !this._renderer) return
+    if (!this.initialized || !this.renderer) return
 
     const u = this.uniforms as unknown as UniformAccessor
     u.deltaTime.value = delta
-    u.turbulenceTime.value += delta * this._turbulenceSpeed
+    u.turbulenceTime.value += delta * this.turbulenceSpeed
 
     await (
-      this._renderer as unknown as {
+      this.renderer as unknown as {
         computeAsync: (c: unknown) => Promise<void>
       }
     ).computeAsync(this.computeUpdate)
   }
 
   autoEmit(delta: number): void {
-    if (!this._emitting) return
+    if (!this.isEmitting) return
 
-    const [px, py, pz] = this._position
+    const [px, py, pz] = this.position
     const currentDelay = this.normalizedProps.delay
     const currentEmitCount = this.normalizedProps.emitCount
 
     if (!currentDelay) {
       this.spawn(px, py, pz, currentEmitCount)
     } else {
-      this._emitAccumulator += delta
+      this.emitAccumulator += delta
 
-      if (this._emitAccumulator >= currentDelay) {
-        this._emitAccumulator -= currentDelay
+      if (this.emitAccumulator >= currentDelay) {
+        this.emitAccumulator -= currentDelay
         this.spawn(px, py, pz, currentEmitCount)
       }
     }
   }
 
   start(): void {
-    this._emitting = true
-    this._emitAccumulator = 0
+    this.isEmitting = true
+    this.emitAccumulator = 0
   }
 
   stop(): void {
-    this._emitting = false
+    this.isEmitting = false
   }
 
   clear(): void {
     ;(
-      this._renderer as unknown as {
+      this.renderer as unknown as {
         computeAsync: (c: unknown) => Promise<void>
       }
     ).computeAsync(this.computeInit)
-    this._nextIndex = 0
+    this.nextIndex = 0
   }
 
   updateProps(props: Partial<BaseParticleProps>): void {
@@ -313,7 +313,7 @@ export class VFXParticleSystem {
   }
 
   setPosition(position: [number, number, number]): void {
-    this._position = [...position]
+    this.position = [...position]
   }
 
   setDelay(delay: number): void {
@@ -325,38 +325,11 @@ export class VFXParticleSystem {
   }
 
   setTurbulenceSpeed(speed: number): void {
-    this._turbulenceSpeed = speed
+    this.turbulenceSpeed = speed
   }
 
   setCurveTexture(texture: THREE.DataTexture): void {
     this.curveTexture = texture
   }
 
-  get isEmitting(): boolean {
-    return this._emitting
-  }
-
-  set isEmitting(value: boolean) {
-    this._emitting = value
-  }
-
-  get initialized(): boolean {
-    return this._initialized
-  }
-
-  set initialized(value: boolean) {
-    this._initialized = value
-  }
-
-  get nextIndex(): number {
-    return this._nextIndex
-  }
-
-  set nextIndex(value: number) {
-    this._nextIndex = value
-  }
-
-  get position(): [number, number, number] {
-    return this._position
-  }
 }

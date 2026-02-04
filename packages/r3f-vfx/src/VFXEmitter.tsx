@@ -30,8 +30,8 @@ export interface VFXEmitterProps extends EmitterControllerOptions {
 }
 
 // Reusable temp objects for transforms (avoid allocations in render loop)
-const _worldPos = new Vector3()
-const _worldQuat = new Quaternion()
+const worldPos = new Vector3()
+const worldQuat = new Quaternion()
 
 export const VFXEmitter = forwardRef(function VFXEmitter(
   {
@@ -120,9 +120,9 @@ export const VFXEmitter = forwardRef(function VFXEmitter(
 
     if (!groupRef.current) return
 
-    groupRef.current.getWorldPosition(_worldPos)
-    groupRef.current.getWorldQuaternion(_worldQuat)
-    controller.update(delta, _worldPos, _worldQuat)
+    groupRef.current.getWorldPosition(worldPos)
+    groupRef.current.getWorldQuaternion(worldQuat)
+    controller.update(delta, worldPos, worldQuat)
   })
 
   // Emit function with position resolution
@@ -145,9 +145,9 @@ export const VFXEmitter = forwardRef(function VFXEmitter(
         return false
       }
 
-      groupRef.current.getWorldPosition(_worldPos)
-      groupRef.current.getWorldQuaternion(_worldQuat)
-      return controller.emitAtPosition(_worldPos, _worldQuat, emitOverrides)
+      groupRef.current.getWorldPosition(worldPos)
+      groupRef.current.getWorldQuaternion(worldQuat)
+      return controller.emitAtPosition(worldPos, worldQuat, emitOverrides)
     },
     [controller, getParticleSystem, name]
   )
@@ -165,9 +165,9 @@ export const VFXEmitter = forwardRef(function VFXEmitter(
 
       if (!controller.getSystem()) return false
 
-      groupRef.current.getWorldPosition(_worldPos)
-      groupRef.current.getWorldQuaternion(_worldQuat)
-      return controller.burst(count, _worldPos, _worldQuat)
+      groupRef.current.getWorldPosition(worldPos)
+      groupRef.current.getWorldQuaternion(worldQuat)
+      return controller.burst(count, worldPos, worldQuat)
     },
     [controller, getParticleSystem]
   )

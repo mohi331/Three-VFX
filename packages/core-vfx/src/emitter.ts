@@ -4,35 +4,35 @@ import type { EmitterControllerOptions } from './types'
 import type { ParticleSystemRef } from './core-store'
 
 // Reusable temp objects for transforms (avoid allocations in update loop)
-const _tempVec = new Vector3()
+const tempVec = new Vector3()
 
 export class EmitterController {
-  private _system: ParticleSystemRef | null = null
-  private _emitting: boolean
-  private _emitAccumulator = 0
-  private _hasEmittedOnce = false
-  private _options: EmitterControllerOptions
+  private system: ParticleSystemRef | null = null
+  isEmitting: boolean
+  private emitAccumulator = 0
+  private hasEmittedOnce = false
+  private options: EmitterControllerOptions
 
   constructor(options: EmitterControllerOptions) {
-    this._options = { ...options }
-    this._emitting = options.autoStart ?? true
+    this.options = { ...options }
+    this.isEmitting = options.autoStart ?? true
   }
 
   setSystem(system: ParticleSystemRef | null): void {
-    this._system = system
+    this.system = system
   }
 
   getSystem(): ParticleSystemRef | null {
-    return this._system
+    return this.system
   }
 
   updateOptions(options: Partial<EmitterControllerOptions>): void {
-    this._options = { ...this._options, ...options }
+    this.options = { ...this.options, ...options }
     if (options.autoStart !== undefined) {
-      this._emitting = options.autoStart
+      this.isEmitting = options.autoStart
       if (options.autoStart) {
-        this._hasEmittedOnce = false
-        this._emitAccumulator = 0
+        this.hasEmittedOnce = false
+        this.emitAccumulator = 0
       }
     }
   }
@@ -42,7 +42,7 @@ export class EmitterController {
     dirRange: [[number, number], [number, number], [number, number]],
     quat: QuaternionType
   ): [[number, number], [number, number], [number, number]] {
-    const minDir = _tempVec.set(dirRange[0][0], dirRange[1][0], dirRange[2][0])
+    const minDir = tempVec.set(dirRange[0][0], dirRange[1][0], dirRange[2][0])
     minDir.applyQuaternion(quat)
 
     const maxDir = new Vector3(dirRange[0][1], dirRange[1][1], dirRange[2][1])
@@ -60,33 +60,33 @@ export class EmitterController {
     worldPosition: { x: number; y: number; z: number },
     worldQuaternion?: QuaternionType
   ): void {
-    if (!this._emitting) return
+    if (!this.isEmitting) return
 
-    const loop = this._options.loop ?? true
-    if (!loop && this._hasEmittedOnce) return
+    const loop = this.options.loop ?? true
+    if (!loop && this.hasEmittedOnce) return
 
-    const delay = this._options.delay ?? 0
+    const delay = this.options.delay ?? 0
 
     if (delay <= 0) {
-      const success = this._emitAtPosition(worldPosition, worldQuaternion)
-      if (success) this._hasEmittedOnce = true
+      const success = this.emitAtPosition(worldPosition, worldQuaternion)
+      if (success) this.hasEmittedOnce = true
     } else {
-      this._emitAccumulator += delta
+      this.emitAccumulator += delta
 
-      if (this._emitAccumulator >= delay) {
-        this._emitAccumulator -= delay
-        const success = this._emitAtPosition(worldPosition, worldQuaternion)
-        if (success) this._hasEmittedOnce = true
+      if (this.emitAccumulator >= delay) {
+        this.emitAccumulator -= delay
+        const success = this.emitAtPosition(worldPosition, worldQuaternion)
+        if (success) this.hasEmittedOnce = true
       }
     }
   }
 
   emit(emitOverrides: Record<string, unknown> | null = null): boolean {
-    if (!this._system?.spawn) return false
+    if (!this.system?.spawn) return false
 
     // This version needs position from the framework wrapper
-    // Use [0,0,0] as default - framework wrappers should use _emitAtPosition
-    return this._doEmit({ x: 0, y: 0, z: 0 }, undefined, emitOverrides)
+    // Use [0,0,0] as default - framework wrappers should use emitAtPosition
+    return this.doEmit({ x: 0, y: 0, z: 0 }, undefined, emitOverrides)
   }
 
   emitAtPosition(
@@ -94,7 +94,7 @@ export class EmitterController {
     worldQuaternion?: QuaternionType,
     emitOverrides: Record<string, unknown> | null = null
   ): boolean {
-    return this._doEmit(worldPosition, worldQuaternion, emitOverrides)
+    return this.doEmit(worldPosition, worldQuaternion, emitOverrides)
   }
 
   burst(
@@ -102,31 +102,31 @@ export class EmitterController {
     worldPosition: { x: number; y: number; z: number },
     worldQuaternion?: QuaternionType
   ): boolean {
-    if (!this._system?.spawn) return false
+    if (!this.system?.spawn) return false
 
-    const direction = this._options.direction
+    const direction = this.options.direction
     let emitDir = direction
 
-    if (this._options.localDirection && direction && worldQuaternion) {
+    if (this.options.localDirection && direction && worldQuaternion) {
       emitDir = this.transformDirectionByQuat(direction, worldQuaternion)
     }
 
     const finalOverrides = emitDir
-      ? { ...this._options.overrides, direction: emitDir }
-      : this._options.overrides
+      ? { ...this.options.overrides, direction: emitDir }
+      : this.options.overrides
 
-    this._system.spawn(
+    this.system.spawn(
       worldPosition.x,
       worldPosition.y,
       worldPosition.z,
-      count ?? this._options.emitCount ?? 10,
+      count ?? this.options.emitCount ?? 10,
       finalOverrides
     )
 
-    if (this._options.onEmit) {
-      this._options.onEmit({
+    if (this.options.onEmit) {
+      this.options.onEmit({
         position: [worldPosition.x, worldPosition.y, worldPosition.z],
-        count: count ?? this._options.emitCount ?? 10,
+        count: count ?? this.options.emitCount ?? 10,
         direction: emitDir,
       })
     }
@@ -135,38 +135,26 @@ export class EmitterController {
   }
 
   start(): void {
-    this._emitting = true
-    this._hasEmittedOnce = false
-    this._emitAccumulator = 0
+    this.isEmitting = true
+    this.hasEmittedOnce = false
+    this.emitAccumulator = 0
   }
 
   stop(): void {
-    this._emitting = false
+    this.isEmitting = false
   }
 
-  get isEmitting(): boolean {
-    return this._emitting
-  }
-
-  private _emitAtPosition(
-    worldPosition: { x: number; y: number; z: number },
-    worldQuaternion?: QuaternionType,
-    emitOverrides?: Record<string, unknown> | null
-  ): boolean {
-    return this._doEmit(worldPosition, worldQuaternion, emitOverrides ?? null)
-  }
-
-  private _doEmit(
+  private doEmit(
     worldPosition: { x: number; y: number; z: number },
     worldQuaternion?: QuaternionType,
     emitOverrides: Record<string, unknown> | null = null
   ): boolean {
-    if (!this._system?.spawn) return false
+    if (!this.system?.spawn) return false
 
-    const direction = this._options.direction
+    const direction = this.options.direction
     let emitDir = direction
 
-    if (this._options.localDirection && direction && worldQuaternion) {
+    if (this.options.localDirection && direction && worldQuaternion) {
       emitDir = this.transformDirectionByQuat(direction, worldQuaternion)
     }
 
@@ -176,7 +164,7 @@ export class EmitterController {
       | undefined
 
     let finalDir = emitDir
-    if (emitTimeDirection && this._options.localDirection && worldQuaternion) {
+    if (emitTimeDirection && this.options.localDirection && worldQuaternion) {
       finalDir = this.transformDirectionByQuat(
         emitTimeDirection,
         worldQuaternion
@@ -188,16 +176,16 @@ export class EmitterController {
     // Merge: component overrides -> emit-time overrides (without direction) -> final direction
     const { direction: _, ...emitOverridesWithoutDir } = emitOverrides || {}
     const mergedOverrides = {
-      ...this._options.overrides,
+      ...this.options.overrides,
       ...emitOverridesWithoutDir,
     }
     const finalOverrides = finalDir
       ? { ...mergedOverrides, direction: finalDir }
       : mergedOverrides
 
-    const emitCount = this._options.emitCount ?? 10
+    const emitCount = this.options.emitCount ?? 10
 
-    this._system.spawn(
+    this.system.spawn(
       worldPosition.x,
       worldPosition.y,
       worldPosition.z,
@@ -205,8 +193,8 @@ export class EmitterController {
       finalOverrides
     )
 
-    if (this._options.onEmit) {
-      this._options.onEmit({
+    if (this.options.onEmit) {
+      this.options.onEmit({
         position: [worldPosition.x, worldPosition.y, worldPosition.z],
         count: emitCount,
         direction: finalDir,
