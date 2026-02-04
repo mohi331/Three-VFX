@@ -1,5 +1,13 @@
 # r3f-vfx
 
+## 0.2.1
+
+### Patch Changes
+
+- eda4b4f: Add Tres and Threlte support
+- Updated dependencies [eda4b4f]
+  - debug-vfx@0.1.1
+
 ## 0.2.0
 
 ### Minor Changes

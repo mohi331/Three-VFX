@@ -1,5 +1,16 @@
 # threlte-vfx
 
+## 0.2.0
+
+### Minor Changes
+
+- eda4b4f: Add Tres and Threlte support
+
+### Patch Changes
+
+- Updated dependencies [eda4b4f]
+  - debug-vfx@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
