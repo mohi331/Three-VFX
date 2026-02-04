@@ -1,4 +1,4 @@
-# ✨ Three VFX
+# ✨ Three VFX ✨
 
 High-performance GPU-accelerated particle system for Three.js WebGPU.
 
@@ -6,16 +6,15 @@ Available for React Three Fiber (R3F), and experimentally for vanilla Three.js, 
 
 ## Features
 
-- GPU Compute Shaders - All particle simulation runs on the GPU for maximum performance
-- Flexible Appearance - Sprites, custom geometry, materials, and shaders
-- Advanced Physics - Gravity, turbulence, attractors, collisions, and more
-- Multiple Emitter Shapes - Point, Box, Sphere, Cone, Disk, and Edge emitters
-- Curve-based Control - Bezier curves for size, opacity, velocity, and rotation over lifetime
-- Emitter System - Decoupled emitters that can share particle systems
-- WebGPU Native - Built specifically for Three.js WebGPU renderer
+- 🚀 **GPU Compute Shaders** - All particle simulation runs on the GPU for maximum performance
+- 🎨 **Flexible Appearance** - Sprites, custom geometry, materials, and shaders
+- 🌀 **Advanced Physics** - Gravity, turbulence, attractors, collisions, and more
+- 🎯 **Multiple Emitter Shapes** - Point, Box, Sphere, Cone, Disk, and Edge emitters
+- 📊 **Curve-based Control** - Bezier curves for size, opacity, velocity, and rotation over lifetime
+- 🔗 **Emitter System** - Decoupled emitters that can share particle systems
+- ⚡ **WebGPU Native** - Built specifically for Three.js WebGPU renderer
 
-> [!WARNING]  
-> Three VFX only supports WebGPU at the moment ([79% global support](https://caniuse.com/webgpu)). A `fallback` option is available to replace the particle systems by your own fallback objects.
+⚠️ Three VFX only supports WebGPU at the moment ([79% global support](https://caniuse.com/webgpu)). A `fallback` option is available to replace the particle systems by your own fallback objects.
 
 
 ## Quick Start
