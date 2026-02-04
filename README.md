@@ -1,35 +1,36 @@
-# r3f-vfx
+# ✨ Three VFX
 
-High-performance GPU-accelerated particle system for Three.js WebGPU with React Three Fiber.
+High-performance GPU-accelerated particle system for Three.js WebGPU.
+
+Available for React Three Fiber (R3F), and experimentally for vanilla Three.js, TresJS (Vue), and Threlte (Svelte).
 
 ## Features
 
-- 🚀 **GPU Compute Shaders** - All particle simulation runs on the GPU for maximum performance
-- 🎨 **Flexible Appearance** - Sprites, custom geometry, materials, and shaders
-- 🌀 **Advanced Physics** - Gravity, turbulence, attractors, collisions, and more
-- 🎯 **Multiple Emitter Shapes** - Point, Box, Sphere, Cone, Disk, and Edge emitters
-- 📊 **Curve-based Control** - Bezier curves for size, opacity, velocity, and rotation over lifetime
-- 🔗 **Emitter System** - Decoupled emitters that can share particle systems
-- ⚡ **WebGPU Native** - Built specifically for Three.js WebGPU renderer
+- GPU Compute Shaders - All particle simulation runs on the GPU for maximum performance
+- Flexible Appearance - Sprites, custom geometry, materials, and shaders
+- Advanced Physics - Gravity, turbulence, attractors, collisions, and more
+- Multiple Emitter Shapes - Point, Box, Sphere, Cone, Disk, and Edge emitters
+- Curve-based Control - Bezier curves for size, opacity, velocity, and rotation over lifetime
+- Emitter System - Decoupled emitters that can share particle systems
+- WebGPU Native - Built specifically for Three.js WebGPU renderer
 
-## Installation
+> [!WARNING]  
+> Three VFX only supports WebGPU at the moment ([79% global support](https://caniuse.com/webgpu)). A `fallback` option is available to replace the particle systems by your own fallback objects.
+
+
+## Quick Start
+
+### React Three Fiber
+
+Add it to your React Three Fiber project with:
 
 ```bash
 npm install r3f-vfx
 ```
 
-### Peer Dependencies
-
-```bash
-npm install three @react-three/fiber react
-```
-
-## Quick Start
-
 ```tsx
 import { Canvas } from '@react-three/fiber'
-import { VFXParticles, Appearance, EmitterShape } from 'r3f-vfx'
-import * as THREE from 'three/webgpu'
+import { VFXParticles } from 'r3f-vfx'
 
 function App() {
   return (
@@ -40,7 +41,64 @@ function App() {
 }
 ```
 
-That's it, start designing in the debug panel, then copy JSX
+### Vanilla Three.js (Experimental)
+
+Add it to your vanilla Three.js project with:
+
+```bash
+npm install vanilla-vfx
+```
+
+```ts
+import { VFXParticles } from 'vanilla-vfx'
+
+const particles = new VFXParticles(renderer, { debug: true })
+scene.add(particles.renderObject)
+```
+
+### TresJS / Vue (Experimental)
+
+Add it to your TresJS project with:
+
+```bash
+npm install tres-vfx
+```
+
+```vue
+<script setup>
+  import { TresCanvas } from '@tresjs/core'
+  import { VFXParticles } from 'tres-vfx'
+</script>
+
+<template>
+  <TresCanvas>
+    <VFXParticles debug />
+  </TresCanvas>
+</template>
+```
+
+### Threlte / Svelte (Experimental)
+
+Add it to your Threlte project with:
+
+```bash
+npm install threlte-vfx
+```
+
+```svelte
+<script>
+  import { Canvas } from '@threlte/core'
+  import VFXParticles from 'threlte-vfx/VFXParticles.svelte'
+</script>
+
+<Canvas>
+  <VFXParticles debug />
+</Canvas>
+```
+
+## How to use
+
+Use the debug panel to design your effect, then copy the generated code and replace it in your code.
 
 ## API Reference
 
