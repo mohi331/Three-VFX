@@ -1,5 +1,16 @@
 # threlte-vfx
 
+## 0.1.0
+
+### Minor Changes
+
+- 9c896f8: Add vanilla support by moving most logic to core
+
+### Patch Changes
+
+- Updated dependencies [9c896f8]
+  - core-vfx@0.1.0
+
 ## 0.0.10
 
 ### Patch Changes
