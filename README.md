@@ -13,7 +13,7 @@ Available for React Three Fiber (R3F), and experimentally for vanilla Three.js, 
 - 📊 **Curve-based Control** - Bezier curves for size, opacity, velocity, and rotation over lifetime
 - 🔗 **Emitter System** - Decoupled emitters that can share particle systems
 - ⚡ **WebGPU Native** - Built specifically for Three.js WebGPU renderer
-- 🐢 **WebGL fallback** – Three VFX primarily supports WebGPU ([79% global support](https://caniuse.com/webgpu)) but provides a CPU fallback
+- 🐢 **WebGL fallback** – Three VFX targets WebGPU ([79% global support](https://caniuse.com/webgpu)) but provides a CPU fallback
 
 ## Quick Start
 
